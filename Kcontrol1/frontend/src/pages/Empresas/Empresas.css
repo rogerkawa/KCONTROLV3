@@ -1,0 +1,939 @@
+
+.empresas-page {
+    width: 100%;
+    max-width: 1500px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
+    animation: empresas-enter .4s ease both;
+}
+
+@keyframes empresas-enter {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* HEADER */
+
+.empresas-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.empresas-eyebrow {
+    display: block;
+    margin-bottom: 9px;
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+}
+
+.empresas-header h1 {
+    color: var(--text);
+    font-family: var(--font-heading);
+    font-size: clamp(25px, 3vw, 32px);
+    font-weight: 600;
+    letter-spacing: -1px;
+}
+
+.empresas-header p {
+    margin-top: 7px;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.empresas-refresh {
+    height: 40px;
+    padding: 0 15px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    color: var(--text-secondary);
+    font-family: var(--font-primary);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.empresas-refresh:hover {
+    border-color: var(--border-hover);
+    background: var(--surface-hover);
+    color: var(--text);
+}
+
+.empresas-refresh:disabled {
+    opacity: .6;
+    cursor: not-allowed;
+}
+
+.rotating {
+    animation: empresas-rotate 1s linear infinite;
+}
+
+@keyframes empresas-rotate {
+    to { transform: rotate(360deg); }
+}
+
+/* ALERTAS */
+
+.empresas-alert {
+    min-height: 44px;
+    padding: 11px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    font-size: 12px;
+}
+
+.empresas-alert.sucesso {
+    color: var(--success);
+    background: var(--success-bg);
+}
+
+.empresas-alert.erro {
+    color: var(--danger);
+    background: var(--danger-bg);
+}
+
+.empresas-alert button {
+    margin-left: auto;
+    border: none;
+    background: transparent;
+    color: inherit;
+    font-size: 17px;
+    cursor: pointer;
+}
+
+/* INDICADORES */
+
+.empresas-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.empresa-stat-card {
+    min-width: 0;
+    padding: 19px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    transition: var(--transition);
+}
+
+.empresa-stat-card:hover {
+    border-color: var(--border-hover);
+    transform: translateY(-2px);
+}
+
+.empresa-stat-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.empresa-stat-top i {
+    font-size: 17px;
+    color: var(--text-secondary);
+}
+
+.empresa-stat-card strong {
+    display: block;
+    margin-top: 17px;
+    color: var(--text);
+    font-family: var(--font-heading);
+    font-size: 27px;
+    font-weight: 600;
+    letter-spacing: -1px;
+}
+
+.empresa-stat-card small {
+    display: block;
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 10px;
+}
+
+/* CONTEÚDO */
+
+.empresas-content {
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+}
+
+.empresas-content-header {
+    padding: 21px 22px;
+    border-bottom: 1px solid var(--border);
+}
+
+.empresas-content-header h2 {
+    color: var(--text);
+    font-family: var(--font-heading);
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.empresas-content-header span {
+    display: block;
+    margin-top: 5px;
+    color: var(--muted);
+    font-size: 11px;
+}
+
+/* BUSCA E FILTROS */
+
+.empresas-toolbar {
+    padding: 17px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 15px;
+    border-bottom: 1px solid var(--border);
+}
+
+.empresas-search {
+    width: min(100%, 340px);
+    height: 39px;
+    padding: 0 11px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--background);
+    transition: var(--transition);
+}
+
+.empresas-search:focus-within {
+    border-color: var(--border-hover);
+}
+
+.empresas-search > i {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.empresas-search input {
+    width: 100%;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--text);
+    font-family: var(--font-primary);
+    font-size: 11px;
+}
+
+.empresas-search input::placeholder {
+    color: var(--muted-light);
+}
+
+.empresas-search button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.empresas-filters {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.empresas-filters button {
+    padding: 8px 12px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--muted);
+    font-family: var(--font-primary);
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.empresas-filters button:hover {
+    background: var(--surface-hover);
+    color: var(--text);
+}
+
+.empresas-filters button.active {
+    border-color: var(--border);
+    background: var(--surface-elevated);
+    color: var(--text);
+}
+
+/* TABELA */
+
+.empresas-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.empresas-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.empresas-table th {
+    padding: 13px 19px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-hover);
+    color: var(--muted);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .7px;
+    text-transform: uppercase;
+}
+
+.empresas-table td {
+    padding: 15px 19px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-secondary);
+    font-size: 11px;
+}
+
+.empresas-table tbody tr {
+    transition: background var(--transition);
+}
+
+.empresas-table tbody tr:hover {
+    background: var(--surface-hover);
+}
+
+.empresas-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.empresa-identity {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+}
+
+.empresa-avatar,
+.empresa-modal-avatar {
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    background: var(--surface-elevated);
+    color: var(--text);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.empresa-identity div:last-child {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.empresa-identity strong {
+    max-width: 230px;
+    overflow: hidden;
+    color: var(--text);
+    font-size: 11px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+}
+
+.empresa-identity span {
+    max-width: 230px;
+    overflow: hidden;
+    color: var(--muted);
+    font-size: 10px;
+    text-overflow: ellipsis;
+}
+
+.empresa-cnpj {
+    font-variant-numeric: tabular-nums;
+}
+
+.empresa-status {
+    width: fit-content;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 9px;
+    border: 1px solid var(--border);
+    border-radius: 30px;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.status-indicator {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.status-ativa {
+    border-color: rgba(117, 201, 154, .2);
+    background: var(--success-bg);
+    color: var(--success);
+}
+
+.status-suspensa {
+    border-color: rgba(231, 188, 117, .2);
+    background: var(--warning-bg);
+    color: var(--warning);
+}
+
+.status-inativa {
+    border-color: var(--border);
+    background: var(--surface-hover);
+    color: var(--muted);
+}
+
+.empresa-detail-button {
+    width: 31px;
+    height: 31px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.empresa-detail-button:hover {
+    border-color: var(--border-hover);
+    background: var(--surface-elevated);
+    color: var(--text);
+}
+
+/* ESTADOS */
+
+.empresas-state {
+    min-height: 240px;
+    padding: 35px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.empresas-state > i {
+    margin-bottom: 14px;
+    color: var(--muted);
+    font-size: 27px;
+}
+
+.empresas-state h3 {
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.empresas-state p {
+    max-width: 340px;
+    margin-top: 7px;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.6;
+}
+
+.empresas-state button {
+    margin-top: 15px;
+    padding: 9px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface-elevated);
+    color: var(--text);
+    font-size: 11px;
+    cursor: pointer;
+}
+
+.empresas-spinner {
+    width: 25px;
+    height: 25px;
+    border: 2px solid var(--border);
+    border-top-color: var(--text);
+    border-radius: 50%;
+    animation: empresas-rotate .7s linear infinite;
+}
+
+.empresas-state .empresas-spinner + p {
+    margin-top: 13px;
+}
+
+/* MODAL */
+
+.empresa-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--overlay);
+    backdrop-filter: blur(5px);
+    animation: modal-fade .2s ease;
+}
+
+@keyframes modal-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.empresa-modal {
+    width: 100%;
+    max-width: 590px;
+    max-height: min(90vh, 760px);
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    animation: modal-enter .25s ease;
+}
+
+@keyframes modal-enter {
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.empresa-modal-header {
+    padding: 23px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 15px;
+    border-bottom: 1px solid var(--border);
+}
+
+.empresa-modal-header span {
+    color: var(--muted);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+}
+
+.empresa-modal-header h2 {
+    margin-top: 7px;
+    color: var(--text);
+    font-family: var(--font-heading);
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.empresa-modal-header > button {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+}
+
+.empresa-modal-profile {
+    padding: 22px 23px;
+    display: flex;
+    align-items: center;
+    gap: 13px;
+}
+
+.empresa-modal-avatar {
+    width: 49px;
+    height: 49px;
+    border-radius: 13px;
+    font-size: 14px;
+}
+
+.empresa-modal-profile > div:last-child {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.empresa-modal-profile strong {
+    color: var(--text);
+    font-size: 13px;
+}
+
+.empresa-detail-grid {
+    margin: 0 23px;
+    padding: 19px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 21px 15px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--background);
+}
+
+.empresa-detail-grid div {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.empresa-detail-grid span {
+    color: var(--muted);
+    font-size: 10px;
+}
+
+.empresa-detail-grid strong {
+    overflow-wrap: anywhere;
+    color: var(--text);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.empresa-modal-stats {
+    margin: 17px 23px 0;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 9px;
+}
+
+.empresa-modal-stats div {
+    min-width: 0;
+    padding: 13px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface-hover);
+}
+
+.empresa-modal-stats i {
+    color: var(--muted);
+    font-size: 15px;
+}
+
+.empresa-modal-stats strong {
+    color: var(--text);
+    font-family: var(--font-heading);
+    font-size: 18px;
+}
+
+.empresa-modal-stats span {
+    color: var(--muted);
+    font-size: 9px;
+}
+
+.empresa-modal-footer {
+    padding: 20px 23px;
+    margin-top: 20px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 9px;
+    border-top: 1px solid var(--border);
+}
+
+.empresa-secondary-button,
+.empresa-primary-button,
+.empresa-danger-button {
+    min-height: 39px;
+    padding: 0 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    font-family: var(--font-primary);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.empresa-secondary-button {
+    background: var(--surface-hover);
+    color: var(--text-secondary);
+}
+
+.empresa-primary-button {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--accent-contrast);
+}
+
+.empresa-danger-button {
+    border-color: rgba(239, 133, 133, .2);
+    background: var(--danger-bg);
+    color: var(--danger);
+}
+
+.empresa-secondary-button:hover,
+.empresa-primary-button:hover,
+.empresa-danger-button:hover {
+    filter: brightness(1.1);
+}
+
+.empresa-primary-button:disabled,
+.empresa-secondary-button:disabled {
+    opacity: .6;
+    cursor: not-allowed;
+}
+
+.empresa-modal-loading {
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: var(--muted);
+    font-size: 11px;
+}
+
+/* CONFIRMAÇÃO */
+
+.empresa-confirm-modal {
+    width: 100%;
+    max-width: 390px;
+    padding: 27px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    text-align: center;
+    animation: modal-enter .25s ease;
+}
+
+.empresa-confirm-icon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 17px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--surface-hover);
+    color: var(--text);
+    font-size: 20px;
+}
+
+.empresa-confirm-modal h2 {
+    color: var(--text);
+    font-family: var(--font-heading);
+    font-size: 17px;
+}
+
+.empresa-confirm-modal > p {
+    margin-top: 9px;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.7;
+}
+
+.empresa-confirm-modal > p strong {
+    color: var(--text);
+}
+
+.empresa-confirm-actions {
+    margin-top: 23px;
+    display: flex;
+    justify-content: center;
+    gap: 9px;
+}
+
+.empresa-action-error {
+    margin-top: 14px;
+    color: var(--danger);
+    font-size: 11px;
+}
+
+/* RESPONSIVIDADE */
+
+@media (max-width: 1000px) {
+    .empresas-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 650px) {
+    .empresas-page {
+        gap: 19px;
+        padding-bottom: 15px;
+    }
+
+    .empresas-header {
+        align-items: flex-start;
+    }
+
+    .empresas-header h1 {
+        font-size: 25px;
+    }
+
+    .empresas-header p {
+        max-width: 240px;
+        line-height: 1.5;
+    }
+
+    .empresas-refresh {
+        width: 39px;
+        padding: 0;
+        justify-content: center;
+    }
+
+    .empresas-refresh span {
+        display: none;
+    }
+
+    .empresas-stats {
+        gap: 9px;
+    }
+
+    .empresa-stat-card {
+        padding: 14px;
+    }
+
+    .empresa-stat-top {
+        font-size: 10px;
+    }
+
+    .empresa-stat-card strong {
+        margin-top: 12px;
+        font-size: 23px;
+    }
+
+    .empresas-content-header {
+        padding: 17px;
+    }
+
+    .empresas-toolbar {
+        padding: 14px;
+        align-items: stretch;
+    }
+
+    .empresas-search {
+        width: 100%;
+    }
+
+    .empresas-filters {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 2px;
+    }
+
+    .empresas-filters button {
+        flex-shrink: 0;
+    }
+
+    .empresas-table {
+        min-width: 760px;
+    }
+
+    .empresa-modal-overlay {
+        padding: 12px;
+        align-items: flex-end;
+    }
+
+    .empresa-modal {
+        max-height: 88vh;
+        border-radius: 18px;
+    }
+
+    .empresa-modal-header {
+        padding: 19px;
+    }
+
+    .empresa-detail-grid {
+        margin: 0 15px;
+        padding: 15px;
+        gap: 17px 10px;
+    }
+
+    .empresa-modal-profile {
+        padding: 18px 15px;
+    }
+
+    .empresa-modal-stats {
+        margin: 14px 15px 0;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .empresa-modal-footer {
+        padding: 16px 15px;
+        flex-wrap: wrap;
+    }
+
+    .empresa-modal-footer button {
+        flex: 1;
+    }
+
+    .empresa-confirm-modal {
+        padding: 23px 18px;
+    }
+
+    .empresa-confirm-actions button {
+        flex: 1;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .empresas-page,
+    .empresa-modal,
+    .empresa-confirm-modal,
+    .empresa-modal-overlay {
+        animation: none;
+    }
+
+    .empresas-spinner,
+    .rotating {
+        animation-duration: 2s;
+    }
+}

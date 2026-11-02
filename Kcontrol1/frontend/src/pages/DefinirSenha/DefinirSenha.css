@@ -1,0 +1,347 @@
+
+.definir-container {
+    min-height: 100vh;
+    min-height: 100svh;
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background:
+        radial-gradient(ellipse at 50% 0%, var(--surface-elevated), transparent 55%),
+        var(--background);
+    color: var(--text);
+    font-family: var(--font-primary);
+}
+
+.definir-card {
+    width: 100%;
+    max-width: 460px;
+    padding: 42px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow);
+    animation: definirEntrada .5s ease both;
+}
+
+.definir-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.definir-logo {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 34px;
+    font-family: var(--font-heading);
+    font-size: 17px;
+    letter-spacing: 1.5px;
+}
+
+.definir-logo span {
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    background: var(--accent);
+    color: var(--accent-contrast);
+    border-radius: 9px;
+    font-weight: 800;
+}
+
+.definir-eyebrow {
+    display: block;
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+}
+
+.definir-header h1,
+.definir-status h1 {
+    font-family: var(--font-heading);
+    font-size: clamp(25px, 5vw, 31px);
+    letter-spacing: -1.2px;
+    margin: 0 0 10px;
+}
+
+.definir-header p,
+.definir-status p {
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.7;
+    margin: 0;
+}
+
+.definir-usuario {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    padding: 15px;
+    margin-bottom: 28px;
+    background: var(--surface-hover);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+}
+
+.definir-avatar {
+    width: 43px;
+    height: 43px;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    background: var(--surface-elevated);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.definir-usuario div:last-child {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 3px;
+}
+
+.definir-usuario strong {
+    font-size: 13px;
+}
+
+.definir-usuario span,
+.definir-usuario small {
+    color: var(--muted);
+    font-size: 11px;
+    overflow-wrap: anywhere;
+}
+
+.definir-field {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    margin-bottom: 20px;
+}
+
+.definir-field label {
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.definir-field small {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.definir-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    height: 48px;
+    padding: 0 14px;
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    transition: var(--transition);
+}
+
+.definir-input-wrapper:focus-within {
+    border-color: var(--text-secondary);
+    box-shadow: 0 0 0 3px var(--surface-glow);
+}
+
+.definir-input-wrapper > i {
+    color: var(--muted);
+    font-size: 15px;
+}
+
+.definir-input-wrapper input {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 13px;
+}
+
+.definir-input-wrapper input::placeholder {
+    color: var(--muted-light);
+}
+
+.definir-toggle {
+    display: grid;
+    place-items: center;
+    padding: 5px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.definir-toggle:hover {
+    color: var(--text);
+}
+
+.definir-button {
+    width: 100%;
+    min-height: 48px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-top: 25px;
+    padding: 12px 18px;
+    background: var(--accent);
+    color: var(--accent-contrast);
+    border: none;
+    border-radius: var(--radius-md);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.definir-button:hover:not(:disabled) {
+    background: var(--accent-hover);
+    transform: translateY(-2px);
+}
+
+.definir-button:disabled {
+    opacity: .6;
+    cursor: not-allowed;
+}
+
+.definir-alerta {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    padding: 12px;
+    background: var(--danger-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    color: var(--danger);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.definir-footer {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 28px;
+    color: var(--muted);
+    font-size: 10px;
+    line-height: 1.5;
+    text-align: center;
+}
+
+.definir-footer i {
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
+.definir-copyright {
+    margin-top: 25px;
+    color: var(--muted-light);
+    font-size: 10px;
+    text-align: center;
+}
+
+.definir-status {
+    text-align: center;
+}
+
+.definir-status-icon {
+    width: 62px;
+    height: 62px;
+    display: grid;
+    place-items: center;
+    margin: 0 auto 25px;
+    border-radius: 50%;
+    font-size: 25px;
+}
+
+.definir-status-icon.sucesso {
+    background: var(--success-bg);
+    color: var(--success);
+}
+
+.definir-status-icon.erro {
+    background: var(--danger-bg);
+    color: var(--danger);
+}
+
+.definir-status .definir-eyebrow {
+    margin-bottom: 10px;
+}
+
+.definir-spinner,
+.definir-button-spinner {
+    width: 22px;
+    height: 22px;
+    border: 2px solid var(--border);
+    border-top-color: var(--text);
+    border-radius: 50%;
+    animation: definirGirar .7s linear infinite;
+}
+
+.definir-spinner {
+    width: 35px;
+    height: 35px;
+    margin: 0 auto 22px;
+}
+
+.definir-button-spinner {
+    width: 16px;
+    height: 16px;
+    border-color: rgba(0,0,0,.2);
+    border-top-color: var(--accent-contrast);
+}
+
+@keyframes definirGirar {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes definirEntrada {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 520px) {
+    .definir-container {
+        padding: 24px 16px;
+    }
+
+    .definir-card {
+        padding: 30px 22px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .definir-card {
+        animation: none;
+    }
+
+    .definir-spinner,
+    .definir-button-spinner {
+        animation-duration: 1.5s;
+    }
+}
