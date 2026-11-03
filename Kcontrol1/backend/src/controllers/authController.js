@@ -5,6 +5,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 const COOKIE_TOKEN = 'kcontrol_token';
+const COOKIE_MFA_PENDING = 'kcontrol_mfa_pending';
 
 const opcoesCookie = {
     httpOnly: true,
@@ -12,6 +13,14 @@ const opcoesCookie = {
     sameSite: 'lax',
     path: '/',
     maxAge: 24 * 60 * 60 * 1000
+};
+
+const opcoesCookieMFA = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 5 * 60 * 1000
 };
 
 const authController = {
@@ -77,6 +86,49 @@ const authController = {
                 throw new Error('JWT_SECRET não configurado.');
             }
 
+            // SuperAdmin: exige MFA antes de liberar a sessão.
+            if (usuario.role === 'superadmin') {
+
+                // Remove qualquer sessão anterior deste navegador.
+                res.clearCookie(COOKIE_TOKEN, {
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV === 'production',
+                    sameSite: 'lax',
+                    path: '/'
+                });
+
+                const tokenPendente = jwt.sign(
+                    {
+                        id_usuario: usuario.id_usuario,
+                        mfa_pending: true
+                    },
+                    process.env.JWT_SECRET,
+                    {
+                        expiresIn: '5m'
+                    }
+                );
+
+                res.cookie(
+                    COOKIE_MFA_PENDING,
+                    tokenPendente,
+                    opcoesCookieMFA
+                );
+
+                return res.status(200).json({
+                    message: 'Verificação adicional necessária.',
+                    requiresMfa: true,
+                    mfaConfigured: Boolean(usuario.mfa_enabled)
+                });
+            }
+
+            // Usuários comuns continuam com o login normal.
+            res.clearCookie(COOKIE_MFA_PENDING, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+                path: '/'
+            });
+
             const token = jwt.sign(
                 {
                     id_usuario: usuario.id_usuario
@@ -95,6 +147,8 @@ const authController = {
 
             return res.status(200).json({
                 message: 'Login realizado com sucesso!',
+
+                requiresMfa: false,
 
                 usuario: {
                     id_usuario: usuario.id_usuario,
@@ -116,12 +170,15 @@ const authController = {
     },
 
     logout(req, res) {
-        res.clearCookie(COOKIE_TOKEN, {
+        const opcoesLimpeza = {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
             path: '/'
-        });
+        };
+
+        res.clearCookie(COOKIE_TOKEN, opcoesLimpeza);
+        res.clearCookie(COOKIE_MFA_PENDING, opcoesLimpeza);
 
         return res.status(200).json({
             message: 'Logout realizado com sucesso.'

@@ -5,7 +5,7 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import DashboardLayout from "./layouts/DashboardLayout/DashboardLayout";
 
-import Login from "./pages/Login/Login";
+import Login from "./pages/login/Login";
 import Dashboard from "./pages/Dashboard/Dashboard";
 import Registros from "./pages/Registros/Registros";
 import Salas from "./pages/Salas/Salas";

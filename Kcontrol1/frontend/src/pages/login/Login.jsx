@@ -13,26 +13,44 @@ function Login() {
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState("");
 
-  async function handleSubmit(e) {
-    e.preventDefault();
+  
+async function handleSubmit(e) {
+  e.preventDefault();
 
-    setErro("");
-    setCarregando(true);
+  setErro("");
+  setCarregando(true);
 
-    try {
-      const usuarioLogado = await login(email, senha);
+  try {
+    const resultado = await login(email, senha);
 
-      if (usuarioLogado.role === "user") {
-        navigate("/registros", { replace: true });
+    // SuperAdmin: encaminha para a etapa de MFA.
+    if (resultado.requiresMfa) {
+      if (resultado.mfaConfigured) {
+        navigate("/mfa/verificar", { replace: true });
       } else {
-        navigate("/dashboard", { replace: true });
+        navigate("/mfa/configurar", { replace: true });
       }
-    } catch (error) {
-      setErro(error.message || 'Não foi possível entrar na plataforma.');
-    } finally {
-      setCarregando(false);
+
+      return;
     }
+
+    const usuarioLogado = resultado.usuario;
+
+    if (usuarioLogado.role === "user") {
+      navigate("/registros", { replace: true });
+    } else {
+      navigate("/dashboard", { replace: true });
+    }
+
+  } catch (error) {
+    setErro(
+      error.message || "Não foi possível entrar na plataforma."
+    );
+  } finally {
+    setCarregando(false);
   }
+}
+
 
   return (
     <main className="login-page">

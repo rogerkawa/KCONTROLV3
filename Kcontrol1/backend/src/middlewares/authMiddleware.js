@@ -16,6 +16,11 @@ async function authMiddleware(req, res, next) {
             token,
             process.env.JWT_SECRET
         );
+        if (decoded.mfa_pending === true) {
+            return res.status(401).json({
+                message: 'Conclua a verificação MFA para acessar a plataforma.'
+            });
+        }
 
         const usuario = await authModel.buscarPorId(
             decoded.id_usuario

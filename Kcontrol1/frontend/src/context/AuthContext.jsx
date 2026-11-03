@@ -30,15 +30,27 @@ export function AuthProvider({ children }) {
     }, []);
 
     async function login(email, senha) {
-        const resposta = await api.post('/auth/login', {
-            email,
-            senha
-        });
+    const resposta = await api.post('/auth/login', {
+        email,
+        senha
+    });
 
-        setUsuario(resposta.usuario);
+    // SuperAdmin precisa concluir o MFA antes de receber uma sessão.
+    if (resposta.requiresMfa) {
+        setUsuario(null);
 
-        return resposta.usuario;
+        return resposta;
     }
+
+    // Usuários comuns recebem a sessão normalmente.
+    if (!resposta.usuario) {
+        throw new Error('Resposta de autenticação inválida.');
+    }
+
+    setUsuario(resposta.usuario);
+
+    return resposta;
+}
 
     function atualizarUsuario(dados) {
         setUsuario(usuarioAtual => ({
