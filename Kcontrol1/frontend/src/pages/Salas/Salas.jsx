@@ -135,49 +135,69 @@ function Salas() {
         setNome('');
     };
 
-    const salvarSala = async event => {
-        event.preventDefault();
+    
+const salvarSala = async event => {
+    event.preventDefault();
 
-        const nomeFormatado = nome.trim();
+    try {
+        setSalvando(true);
 
-        if (!nomeFormatado) {
-            mostrarToast('Informe o nome da sala.', 'erro');
-            return;
+        // CADASTRAR SALA
+        if (modal.tipo === 'criar') {
+            const nomeFormatado = nome.trim();
+
+            if (!nomeFormatado) {
+                mostrarToast('Informe o nome da sala.', 'erro');
+                return;
+            }
+
+            await api.post('/salas', {
+                nome: nomeFormatado
+            });
+
+            mostrarToast('Sala cadastrada com sucesso!');
         }
 
-        try {
-            setSalvando(true);
+        // EDITAR NOME DA SALA
+        if (modal.tipo === 'editar') {
+            const nomeFormatado = nome.trim();
 
-            if (modal.tipo === 'criar') {
-                await api.post('/salas', { nome: nomeFormatado });
-                mostrarToast('Sala cadastrada com sucesso!');
+            if (!nomeFormatado) {
+                mostrarToast('Informe o nome da sala.', 'erro');
+                return;
             }
 
-            if (modal.tipo === 'editar') {
-                await api.put(`/salas/${modal.sala.id_sala}`, {
-                    nome: nomeFormatado
-                });
+            await api.put(`/salas/${modal.sala.id_sala}`, {
+                nome: nomeFormatado
+            });
 
-                mostrarToast('Sala atualizada com sucesso!');
-            }
-
-            if (modal.tipo === 'status') {
-                await api.patch(`/salas/${modal.sala.id_sala}/status`, {
-                    status: statusSelecionado
-                });
-
-                mostrarToast('Status atualizado com sucesso!');
-            }
-
-            setModal(null);
-            setNome('');
-            await carregarSalas(true);
-        } catch (error) {
-            mostrarToast(error.message || 'Não foi possível salvar a sala.', 'erro');
-        } finally {
-            setSalvando(false);
+            mostrarToast('Sala atualizada com sucesso!');
         }
-    };
+
+        // ALTERAR STATUS DA SALA
+        if (modal.tipo === 'status') {
+            await api.patch(`/salas/${modal.sala.id_sala}/status`, {
+                status: statusSelecionado
+            });
+
+            mostrarToast('Status atualizado com sucesso!');
+        }
+
+        setModal(null);
+        setNome('');
+
+        await carregarSalas(true);
+
+    } catch (error) {
+        mostrarToast(
+            error.message || 'Não foi possível salvar a sala.',
+            'erro'
+        );
+    } finally {
+        setSalvando(false);
+    }
+};
+
 
     const excluirSala = async () => {
         if (!salaExcluir) return;

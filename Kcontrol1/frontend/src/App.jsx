@@ -20,6 +20,7 @@ import Solicitacoes from "./pages/Solicitacoes/Solicitacoes";
 import DefinirSenha from "./pages/DefinirSenha/DefinirSenha";
 import LandingPage from "./pages/landpage/LandingPage";
 import VerificarMFA from "./pages/mfa/VerificarMFA";
+import ConfigurarMFA from "./pages/mfa/ConfigurarMFA";
 
 function RedirecionarInicio() {
   const { usuario } = useAuth();
@@ -105,6 +106,10 @@ function AppRoutes() {
           </PublicRoute>
         }
       />
+      <Route
+    path="/mfa/configurar"
+    element={<ConfigurarMFA />}
+/>
       <Route
     path="/mfa/verificar"
     element={<VerificarMFA />}

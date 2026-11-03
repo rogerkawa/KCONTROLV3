@@ -92,151 +92,120 @@ const registroModel = {
         return registros[0];
     },
 
-    async criar(dados) {
-        const conexao = await conect.getConnection();
-
-        try {
-            await conexao.beginTransaction();
-
-            // Verifica se o setor pertence à empresa.
-            const [setores] = await conexao.execute(
-                `SELECT id_setor
-                FROM setores
-                WHERE id_setor = ?
-                AND id_empresa = ?
-                LIMIT 1`,
-                [dados.id_setor, dados.id_empresa]
-            );
-
-            if (!setores.length) {
-                throw new Error('SETOR_NAO_ENCONTRADO');
-            }
-
-            // Bloqueia a sala durante a operação.
-            const [salas] = await conexao.execute(
-                `SELECT id_sala, status
-                FROM sala
-                WHERE id_sala = ?
-                AND id_empresa = ?
-                LIMIT 1
-                FOR UPDATE`,
-                [dados.id_sala, dados.id_empresa]
-            );
-
-            if (!salas.length) {
-                throw new Error('SALA_NAO_ENCONTRADA');
-            }
-
-            if (salas[0].status !== 'disponivel') {
-                throw new Error('SALA_INDISPONIVEL');
-            }
-
-            // Verifica se já existe uma retirada ativa
-            // para a mesma sala e turno.
-            const [registrosAtivos] = await conexao.execute(
-                `SELECT id_registro
-                FROM registros
-                WHERE id_sala = ?
-                AND id_empresa = ?
-                AND turno = ?
-                AND status = 'retirada'
-                LIMIT 1`,
-                [
-                    dados.id_sala,
-                    dados.id_empresa,
-                    dados.turno
-                ]
-            );
-
-            if (registrosAtivos.length) {
-                throw new Error('RETIRADA_JA_EXISTE');
-            }
-
-            const [resultado] = await conexao.execute(
-                `INSERT INTO registros (
-                    id_empresa,
-                    id_usuario,
-                    id_setor,
-                    id_sala,
-                    responsavel,
-                    turno,
-                    data_retirada,
-                    hora_retirada,
-                    status
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'retirada')`,
-                [
-                    dados.id_empresa,
-                    dados.id_usuario,
-                    dados.id_setor,
-                    dados.id_sala,
-                    dados.responsavel,
-                    dados.turno,
-                    dados.data_retirada,
-                    dados.hora_retirada
-                ]
-            );
-
-            await conexao.execute(
-                `UPDATE sala
-                SET status = 'retirada'
-                WHERE id_sala = ?
-                AND id_empresa = ?`,
-                [dados.id_sala, dados.id_empresa]
-            );
-
-            await conexao.commit();
-
-            return resultado.insertId;
-
-        } catch (error) {
-            await conexao.rollback();
-            throw error;
-
-        } finally {
-            conexao.release();
-        }
-    },
-
     
-async devolver(id_registro, id_empresa) {
+async criar(dados) {
     const conexao = await conect.getConnection();
 
     try {
         await conexao.beginTransaction();
 
-        // Primeiro descobrimos a sala vinculada ao registro.
-        const [consulta] = await conexao.execute(
-            `SELECT id_sala
-            FROM registros
-            WHERE id_registro = ?
+        // Verifica se o setor pertence à empresa.
+        const [setores] = await conexao.execute(
+            `SELECT id_setor
+            FROM setores
+            WHERE id_setor = ?
             AND id_empresa = ?
             LIMIT 1`,
-            [id_registro, id_empresa]
+            [dados.id_setor, dados.id_empresa]
         );
 
-        if (!consulta.length) {
-            throw new Error('REGISTRO_NAO_ENCONTRADO');
+        if (!setores.length) {
+            throw new Error('SETOR_NAO_ENCONTRADO');
         }
 
-        const id_sala = consulta[0].id_sala;
-
-        // Bloqueamos primeiro a sala, seguindo a mesma ordem
-        // utilizada na criação de uma retirada.
+        // Bloqueia a sala durante a operação.
         const [salas] = await conexao.execute(
-            `SELECT id_sala
+            `SELECT id_sala, status
             FROM sala
             WHERE id_sala = ?
             AND id_empresa = ?
             LIMIT 1
             FOR UPDATE`,
-            [id_sala, id_empresa]
+            [dados.id_sala, dados.id_empresa]
         );
 
         if (!salas.length) {
             throw new Error('SALA_NAO_ENCONTRADA');
         }
 
-        // Agora bloqueamos o registro.
+        // A sala só pode ser usada se estiver administrativamente disponível.
+        if (salas[0].status !== 'disponivel') {
+            throw new Error('SALA_INDISPONIVEL');
+        }
+
+        // Verifica se já existe um registro ativo
+        // para a mesma sala e o mesmo turno.
+        const [registrosAtivos] = await conexao.execute(
+            `SELECT id_registro
+            FROM registros
+            WHERE id_sala = ?
+            AND id_empresa = ?
+            AND turno = ?
+            AND status = 'retirada'
+            LIMIT 1`,
+            [
+                dados.id_sala,
+                dados.id_empresa,
+                dados.turno
+            ]
+        );
+
+        if (registrosAtivos.length) {
+            throw new Error('RETIRADA_JA_EXISTE');
+        }
+
+        // Cria o agendamento.
+        const [resultado] = await conexao.execute(
+            `INSERT INTO registros (
+                id_empresa,
+                id_usuario,
+                id_setor,
+                id_sala,
+                responsavel,
+                turno,
+                data_retirada,
+                hora_retirada,
+                status
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'retirada')`,
+            [
+                dados.id_empresa,
+                dados.id_usuario,
+                dados.id_setor,
+                dados.id_sala,
+                dados.responsavel,
+                dados.turno,
+                dados.data_retirada,
+                dados.hora_retirada
+            ]
+        );
+
+        // IMPORTANTE:
+        // Não alteramos o status da sala.
+        // A ocupação é controlada pelos registros e seus turnos.
+
+        await conexao.commit();
+
+        return resultado.insertId;
+
+    } catch (error) {
+        await conexao.rollback();
+        throw error;
+
+    } finally {
+        conexao.release();
+    }
+},
+
+
+    
+
+async devolver(id_registro, id_empresa) {
+    const conexao = await conect.getConnection();
+
+    try {
+        await conexao.beginTransaction();
+
+        // Busca o registro e bloqueia a linha.
         const [registros] = await conexao.execute(
             `SELECT id_registro, id_sala, status
             FROM registros
@@ -257,6 +226,7 @@ async devolver(id_registro, id_empresa) {
             throw new Error('REGISTRO_JA_DEVOLVIDO');
         }
 
+        // Finaliza somente o registro.
         await conexao.execute(
             `UPDATE registros
             SET status = 'devolvida',
@@ -266,25 +236,8 @@ async devolver(id_registro, id_empresa) {
             [id_registro, id_empresa]
         );
 
-        const [ativos] = await conexao.execute(
-            `SELECT COUNT(*) AS total
-            FROM registros
-            WHERE id_sala = ?
-            AND id_empresa = ?
-            AND status = 'retirada'`,
-            [id_sala, id_empresa]
-        );
-
-        if (Number(ativos[0].total) === 0) {
-            await conexao.execute(
-                `UPDATE sala
-                SET status = 'disponivel'
-                WHERE id_sala = ?
-                AND id_empresa = ?
-                AND status = 'retirada'`,
-                [id_sala, id_empresa]
-            );
-        }
+        // Não alteramos sala.status.
+        // A sala continua disponível para outros turnos.
 
         await conexao.commit();
 
@@ -298,6 +251,7 @@ async devolver(id_registro, id_empresa) {
         conexao.release();
     }
 }
+
 
 };
 
