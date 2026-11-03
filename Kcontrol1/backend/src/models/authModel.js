@@ -14,6 +14,7 @@ const authModel = {
                 u.role,
                 u.avatar_url,
                 u.status AS status_usuario,
+                u.mfa_enabled,
                 e.status AS status_empresa
             FROM usuarios u
             LEFT JOIN empresas e
@@ -36,6 +37,7 @@ const authModel = {
                 u.role,
                 u.avatar_url,
                 u.status AS status_usuario,
+                u.mfa_enabled,
                 e.status AS status_empresa
             FROM usuarios u
             LEFT JOIN empresas e
