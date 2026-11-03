@@ -31,6 +31,17 @@ async function authMiddleware(req, res, next) {
                 message: 'Usuário não autorizado.'
             });
         }
+        if (
+            usuario.role === 'superadmin' &&
+            (
+                !Boolean(usuario.mfa_enabled) ||
+                decoded.mfa_verified !== true
+            )
+        ) {
+            return res.status(403).json({
+                message: 'Verificação MFA obrigatória para acessar a plataforma.'
+            });
+        }
 
         req.user = {
             id_usuario: usuario.id_usuario,

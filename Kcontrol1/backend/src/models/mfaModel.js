@@ -45,3 +45,27 @@ export async function limparSegredoPendente(idUsuario) {
         [idUsuario]
     );
 }
+export async function consumirCodigoRecuperacao(
+    idUsuario,
+    hashesAtuais,
+    indice
+) {
+    const novosHashes = hashesAtuais.filter(
+        (_, i) => i !== indice
+    );
+
+    const [resultado] = await conect.execute(
+        `UPDATE usuarios
+         SET mfa_recovery_codes = ?
+         WHERE id_usuario = ?
+         AND mfa_enabled = 1
+         AND mfa_recovery_codes = ?`,
+        [
+            JSON.stringify(novosHashes),
+            idUsuario,
+            JSON.stringify(hashesAtuais)
+        ]
+    );
+
+    return resultado.affectedRows === 1;
+}

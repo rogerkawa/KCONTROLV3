@@ -30,27 +30,38 @@ export function AuthProvider({ children }) {
     }, []);
 
     async function login(email, senha) {
-    const resposta = await api.post('/auth/login', {
-        email,
-        senha
-    });
+        const resposta = await api.post('/auth/login', {
+            email,
+            senha
+        });
 
-    // SuperAdmin precisa concluir o MFA antes de receber uma sessão.
-    if (resposta.requiresMfa) {
-        setUsuario(null);
+        if (resposta.requiresMfa) {
+            setUsuario(null);
+            return resposta;
+        }
+
+        if (!resposta.usuario) {
+            throw new Error('Resposta de autenticação inválida.');
+        }
+
+        setUsuario(resposta.usuario);
 
         return resposta;
     }
 
-    // Usuários comuns recebem a sessão normalmente.
-    if (!resposta.usuario) {
-        throw new Error('Resposta de autenticação inválida.');
+    async function verificarMFA(codigo) {
+        const resposta = await api.post('/auth/mfa/verificar', {
+            codigo
+        });
+
+        if (!resposta.usuario) {
+            throw new Error('Resposta de verificação MFA inválida.');
+        }
+
+        setUsuario(resposta.usuario);
+
+        return resposta;
     }
-
-    setUsuario(resposta.usuario);
-
-    return resposta;
-}
 
     function atualizarUsuario(dados) {
         setUsuario(usuarioAtual => ({
@@ -76,6 +87,7 @@ export function AuthProvider({ children }) {
                 carregando,
                 autenticado: Boolean(usuario),
                 login,
+                verificarMFA,
                 logout,
                 atualizarUsuario
             }}

@@ -1,0 +1,390 @@
+
+.mfa-container {
+    min-height: 100vh;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 20px;
+
+    background:
+        radial-gradient(
+            ellipse at 50% 0%,
+            rgba(255, 255, 255, 0.055),
+            transparent 55%
+        ),
+        var(--background);
+
+    color: var(--text);
+}
+
+.mfa-card {
+    width: 100%;
+    max-width: 440px;
+    padding: 42px 38px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+
+    box-shadow:
+        0 24px 70px rgba(0, 0, 0, 0.22),
+        inset 0 1px 0 var(--surface-glow);
+
+    animation: mfaFadeIn 0.5s ease both;
+}
+
+/* Marca */
+
+.mfa-brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 11px;
+
+    font-family: var(--font-heading);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: var(--text);
+}
+
+.mfa-brand-icon {
+    width: 34px;
+    height: 34px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 9px;
+    background: var(--surface-elevated);
+    border: 1px solid var(--border);
+
+    font-size: 17px;
+    color: var(--text);
+}
+
+.mfa-brand-version {
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 1px;
+}
+
+/* Ícone principal */
+
+.mfa-icon {
+    width: 68px;
+    height: 68px;
+    margin-top: 42px;
+    margin-bottom: 25px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 20px;
+    background: var(--surface-elevated);
+    border: 1px solid var(--border);
+
+    color: var(--text);
+    font-size: 29px;
+
+    box-shadow: inset 0 1px 0 var(--surface-glow);
+}
+
+/* Cabeçalho */
+
+.mfa-heading {
+    width: 100%;
+    text-align: center;
+}
+
+.mfa-eyebrow {
+    display: block;
+    margin-bottom: 12px;
+
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+.mfa-heading h1 {
+    margin: 0;
+
+    color: var(--text);
+    font-family: var(--font-heading);
+    font-size: 23px;
+    font-weight: 600;
+    letter-spacing: -0.7px;
+    line-height: 1.35;
+}
+
+.mfa-heading p {
+    max-width: 330px;
+    margin: 12px auto 0;
+
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+/* Formulário */
+
+.mfa-form {
+    width: 100%;
+    margin-top: 32px;
+}
+
+.mfa-form label {
+    display: block;
+    margin-bottom: 10px;
+
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.mfa-form input {
+    width: 100%;
+    height: 54px;
+    padding: 0 16px;
+
+    outline: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+
+    background: var(--background);
+    color: var(--text);
+
+    font-family: var(--font-primary);
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: 4px;
+    text-align: center;
+
+    transition:
+        border-color var(--transition),
+        box-shadow var(--transition),
+        background var(--transition);
+}
+
+.mfa-form input::placeholder {
+    color: var(--muted-light);
+    opacity: 0.65;
+}
+
+.mfa-form input:focus {
+    border-color: var(--border-hover);
+    background: var(--surface-hover);
+
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.045);
+}
+
+/* Mensagem de erro */
+
+.mfa-error {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+
+    margin-top: 12px;
+    padding: 11px 13px;
+
+    border: 1px solid var(--danger-bg);
+    border-radius: var(--radius-md);
+
+    background: var(--danger-bg);
+    color: var(--danger);
+
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+/* Botão principal */
+
+.mfa-submit {
+    width: 100%;
+    min-height: 52px;
+    margin-top: 20px;
+    padding: 0 18px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-md);
+
+    background: var(--accent);
+    color: var(--accent-contrast);
+
+    font-size: 13px;
+    font-weight: 700;
+
+    transition:
+        background var(--transition),
+        border-color var(--transition),
+        transform var(--transition),
+        opacity var(--transition);
+}
+
+.mfa-submit:hover:not(:disabled) {
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
+    transform: translateY(-2px);
+}
+
+.mfa-submit:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.mfa-submit:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+/* Carregamento */
+
+.mfa-spinner {
+    width: 16px;
+    height: 16px;
+
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+
+    animation: mfaSpin 0.7s linear infinite;
+}
+
+/* Alternar método */
+
+.mfa-alternate {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+
+    margin-top: 23px;
+    padding: 5px;
+
+    border: none;
+    background: transparent;
+
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 500;
+
+    transition: color var(--transition);
+}
+
+.mfa-alternate:hover {
+    color: var(--text);
+}
+
+/* Rodapé */
+
+.mfa-footer {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    margin-top: 30px;
+    padding-top: 20px;
+
+    border-top: 1px solid var(--border);
+
+    color: var(--muted);
+    font-size: 10px;
+    text-align: center;
+}
+
+.mfa-footer i {
+    font-size: 12px;
+}
+
+/* Voltar */
+
+.mfa-back {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    margin-top: 22px;
+
+    color: var(--muted);
+    font-size: 12px;
+
+    transition: color var(--transition);
+}
+
+.mfa-back:hover {
+    color: var(--text);
+}
+
+/* Animações */
+
+@keyframes mfaFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes mfaSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Responsividade */
+
+@media (max-width: 480px) {
+    .mfa-container {
+        padding: 20px 15px;
+    }
+
+    .mfa-card {
+        padding: 34px 24px;
+        border-radius: var(--radius-lg);
+    }
+
+    .mfa-icon {
+        width: 60px;
+        height: 60px;
+        margin-top: 34px;
+        font-size: 25px;
+    }
+
+    .mfa-heading h1 {
+        font-size: 21px;
+    }
+
+    .mfa-heading p {
+        font-size: 12px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mfa-card {
+        animation: none;
+    }
+
+    .mfa-spinner {
+        animation-duration: 1.5s;
+    }
+}

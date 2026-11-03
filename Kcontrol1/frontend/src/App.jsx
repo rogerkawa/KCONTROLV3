@@ -19,6 +19,7 @@ import Empresas from "./pages/Empresas/Empresas";
 import Solicitacoes from "./pages/Solicitacoes/Solicitacoes";
 import DefinirSenha from "./pages/DefinirSenha/DefinirSenha";
 import LandingPage from "./pages/landpage/LandingPage";
+import VerificarMFA from "./pages/mfa/VerificarMFA";
 
 function RedirecionarInicio() {
   const { usuario } = useAuth();
@@ -104,6 +105,10 @@ function AppRoutes() {
           </PublicRoute>
         }
       />
+      <Route
+    path="/mfa/verificar"
+    element={<VerificarMFA />}
+/>
 
       <Route path="/solicitar-acesso" element={<SolicitarAcesso />} />
       <Route path="/definir-senha" element={<DefinirSenha />} />
