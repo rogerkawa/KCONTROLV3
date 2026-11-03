@@ -16,18 +16,10 @@ export function AuthProvider({ children }) {
 
     useEffect(() => {
         async function verificarAutenticacao() {
-            const token = localStorage.getItem('token');
-
-            if (!token) {
-                setCarregando(false);
-                return;
-            }
-
             try {
                 const resposta = await api.get('/auth/me');
                 setUsuario(resposta.usuario);
             } catch (error) {
-                localStorage.removeItem('token');
                 setUsuario(null);
             } finally {
                 setCarregando(false);
@@ -43,12 +35,9 @@ export function AuthProvider({ children }) {
             senha
         });
 
-        const { token, usuario } = resposta;
+        setUsuario(resposta.usuario);
 
-        localStorage.setItem('token', token);
-        setUsuario(usuario);
-
-        return usuario;
+        return resposta.usuario;
     }
 
     function atualizarUsuario(dados) {
@@ -58,9 +47,14 @@ export function AuthProvider({ children }) {
         }));
     }
 
-    function logout() {
-        localStorage.removeItem('token');
-        setUsuario(null);
+    async function logout() {
+        try {
+            await api.post('/auth/logout', {});
+        } catch (error) {
+            console.error('Erro ao encerrar sessão:', error);
+        } finally {
+            setUsuario(null);
+        }
     }
 
     return (

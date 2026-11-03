@@ -2,21 +2,24 @@
 const API_URL = import.meta.env.VITE_API_URL;
 
 async function request(endpoint, options = {}) {
-    const token = localStorage.getItem('token');
     const isFormData = options.body instanceof FormData;
 
     const config = {
         ...options,
+
+        credentials: 'include',
+
         headers: {
-            ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
-            ...(token && {
-                Authorization: `Bearer ${token}`
-            }),
+            ...(isFormData
+                ? {}
+                : { 'Content-Type': 'application/json' }),
+
             ...options.headers
         }
     };
 
     const resposta = await fetch(`${API_URL}${endpoint}`, config);
+
     const dados = await resposta.json().catch(() => ({}));
 
     if (!resposta.ok) {

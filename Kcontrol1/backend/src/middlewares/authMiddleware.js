@@ -4,19 +4,11 @@ import authModel from '../models/authModel.js';
 
 async function authMiddleware(req, res, next) {
     try {
-        const authorization = req.headers.authorization;
+        const token = req.cookies?.kcontrol_token;
 
-        if (!authorization) {
+        if (!token) {
             return res.status(401).json({
-                message: 'Token não informado.'
-            });
-        }
-
-        const [tipo, token] = authorization.split(' ');
-
-        if (tipo !== 'Bearer' || !token) {
-            return res.status(401).json({
-                message: 'Formato de token inválido.'
+                message: 'Sessão não encontrada.'
             });
         }
 
@@ -53,7 +45,7 @@ async function authMiddleware(req, res, next) {
             error.name === 'TokenExpiredError'
         ) {
             return res.status(401).json({
-                message: 'Token inválido ou expirado.'
+                message: 'Sessão inválida ou expirada.'
             });
         }
 

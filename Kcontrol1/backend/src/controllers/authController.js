@@ -4,6 +4,16 @@ import authModel from '../models/authModel.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
+const COOKIE_TOKEN = 'kcontrol_token';
+
+const opcoesCookie = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 24 * 60 * 60 * 1000
+};
+
 const authController = {
 
     async login(req, res) {
@@ -63,20 +73,28 @@ const authController = {
                 }
             }
 
+            if (!process.env.JWT_SECRET) {
+                throw new Error('JWT_SECRET não configurado.');
+            }
+
             const token = jwt.sign(
                 {
                     id_usuario: usuario.id_usuario
                 },
                 process.env.JWT_SECRET,
                 {
-                    expiresIn: process.env.JWT_EXPIRES_IN || '1d'
+                    expiresIn: '1d'
                 }
+            );
+
+            res.cookie(
+                COOKIE_TOKEN,
+                token,
+                opcoesCookie
             );
 
             return res.status(200).json({
                 message: 'Login realizado com sucesso!',
-
-                token,
 
                 usuario: {
                     id_usuario: usuario.id_usuario,
@@ -95,6 +113,19 @@ const authController = {
                 message: 'Erro interno no servidor.'
             });
         }
+    },
+
+    logout(req, res) {
+        res.clearCookie(COOKIE_TOKEN, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            path: '/'
+        });
+
+        return res.status(200).json({
+            message: 'Logout realizado com sucesso.'
+        });
     }
 
 };

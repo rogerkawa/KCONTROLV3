@@ -1,22 +1,50 @@
+
 import express from 'express';
 import 'dotenv/config';
 import cors from 'cors';
-
+import cookieParser from 'cookie-parser';
+import { apiLimiter } from './middlewares/rateLimitMiddleware.js';
 import conect from './config/database.js';
 import routes from './routes/index.js';
 
 const app = express();
 
-// Middlewares
 const origensPermitidas = process.env.FRONTEND_URL
     ? process.env.FRONTEND_URL.split(',').map(url => url.trim())
     : ['http://localhost:5173'];
 
 app.use(cors({
-    origin: origensPermitidas
+    origin: origensPermitidas,
+    credentials: true
 }));
 
 app.use(express.json());
+app.use(cookieParser());
+app.use('/api', apiLimiter);
+
+// Proteção CSRF por validação da origem
+app.use((req, res, next) => {
+    const metodosQueAlteramDados = [
+        'POST',
+        'PUT',
+        'PATCH',
+        'DELETE'
+    ];
+
+    if (!metodosQueAlteramDados.includes(req.method)) {
+        return next();
+    }
+
+    const origem = req.headers.origin;
+
+    if (!origem || !origensPermitidas.includes(origem)) {
+        return res.status(403).json({
+            message: 'Origem da requisição não autorizada.'
+        });
+    }
+
+    next();
+});
 
 // Rota inicial
 app.get('/', (req, res) => {
