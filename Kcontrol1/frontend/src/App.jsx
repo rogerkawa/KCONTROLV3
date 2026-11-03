@@ -18,6 +18,7 @@ import SolicitarAcesso from "./pages/SolicitarAcesso/SolicitarAcesso";
 import Empresas from "./pages/Empresas/Empresas";
 import Solicitacoes from "./pages/Solicitacoes/Solicitacoes";
 import DefinirSenha from "./pages/DefinirSenha/DefinirSenha";
+import LandingPage from "./pages/landpage/LandingPage";
 
 function RedirecionarInicio() {
   const { usuario } = useAuth();
@@ -92,7 +93,9 @@ function RotaSuperAdmin({ children }) {
 
 function AppRoutes() {
   return (
+
     <Routes>
+      <Route path="/" element={<LandingPage />} />
       <Route
         path="/login"
         element={
