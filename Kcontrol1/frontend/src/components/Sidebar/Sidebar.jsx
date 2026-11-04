@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { useTemaAtual } from '../../hooks/useTemaAtual';
+import { useTemaAtual } from '../../hooks/tema';
 import "./Sidebar.css";
 
 const menus = {
