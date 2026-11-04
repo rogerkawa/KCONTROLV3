@@ -23,6 +23,8 @@ function Setores() {
 
     const [setorExcluir, setSetorExcluir] = useState(null);
     const [excluindo, setExcluindo] = useState(false);
+    const [setorStatus, setSetorStatus] = useState(null);
+    const [alterandoStatus, setAlterandoStatus] = useState(false);
 
     const carregarSetores = useCallback(async (silencioso = false) => {
         try {
@@ -143,6 +145,39 @@ function Setores() {
             );
         } finally {
             setExcluindo(false);
+        }
+    };
+
+    const alterarStatusSetor = async () => {
+        if (!setorStatus) return;
+
+        const novoStatus =
+            setorStatus.status === 'ativo' ? 'inativo' : 'ativo';
+
+        try {
+            setAlterandoStatus(true);
+
+            await api.patch(`/setores/${setorStatus.id_setor}/status`, {
+                status: novoStatus
+            });
+
+            mostrarToast(
+                novoStatus === 'ativo'
+                    ? 'Setor ativado com sucesso!'
+                    : 'Setor desativado com sucesso!',
+                'success'
+            );
+
+            setSetorStatus(null);
+
+            await carregarSetores(true);
+        } catch (error) {
+            mostrarToast(
+                error.message || 'Não foi possível alterar o status do setor.',
+                'error'
+            );
+        } finally {
+            setAlterandoStatus(false);
         }
     };
 
@@ -302,6 +337,7 @@ function Setores() {
                                 <tr>
                                     <th>SETOR</th>
                                     <th>IDENTIFICAÇÃO</th>
+                                    <th>STATUS</th>
                                     {isAdmin && (
                                         <th className="setores-actions-heading">
                                             AÇÕES
@@ -334,6 +370,14 @@ function Setores() {
                                                 #{String(setor.id_setor).padStart(3, '0')}
                                             </span>
                                         </td>
+                                        <td>
+                                            <span
+                                                className={`setor-status ${setor.status === 'ativo' ? 'ativo' : 'inativo'}`}
+                                            >
+                                                <span className="setor-status-dot"></span>
+                                                {setor.status === 'ativo' ? 'Ativo' : 'Inativo'}
+                                            </span>
+                                        </td>
 
                                         {isAdmin && (
                                             <td>
@@ -349,12 +393,12 @@ function Setores() {
 
                                                     <button
                                                         type="button"
-                                                        className="delete"
-                                                        title="Excluir setor"
-                                                        aria-label={`Excluir ${setor.nome}`}
-                                                        onClick={() => setSetorExcluir(setor)}
+                                                        className={setor.status === 'ativo' ? 'deactivate' : 'activate'}
+                                                        title={setor.status === 'ativo' ? 'Desativar setor' : 'Ativar setor'}
+                                                        aria-label={`${setor.status === 'ativo' ? 'Desativar' : 'Ativar'} ${setor.nome}`}
+                                                        onClick={() => setSetorStatus(setor)}
                                                     >
-                                                        <i className="bi bi-trash3"></i>
+                                                        <i className={`bi ${setor.status === 'ativo' ? 'bi-pause-circle' : 'bi-play-circle'}`}></i>
                                                     </button>
                                                 </div>
                                             </td>
@@ -459,49 +503,86 @@ function Setores() {
                 </div>
             )}
 
-            {/* Confirmação de exclusão */}
-            {setorExcluir && (
+            {/* Confirmação de ativação/desativação */}
+            {setorStatus && (
                 <div
                     className="setores-modal-overlay"
                     onMouseDown={event => {
                         if (
                             event.target === event.currentTarget &&
-                            !excluindo
+                            !alterandoStatus
                         ) {
-                            setSetorExcluir(null);
+                            setSetorStatus(null);
                         }
                     }}
                 >
                     <div className="setores-modal setores-confirm-modal">
                         <div className="setores-confirm-icon">
-                            <i className="bi bi-trash3"></i>
+                            <i
+                                className={`bi ${setorStatus.status === 'ativo'
+                                        ? 'bi-pause-circle'
+                                        : 'bi-play-circle'
+                                    }`}
+                            ></i>
                         </div>
 
-                        <h2>Excluir setor?</h2>
+                        <h2>
+                            {setorStatus.status === 'ativo'
+                                ? 'Desativar setor?'
+                                : 'Ativar setor?'}
+                        </h2>
 
                         <p>
-                            Você está prestes a excluir{' '}
-                            <strong>{setorExcluir.nome}</strong>.
-                            Essa ação não poderá ser desfeita.
+                            {setorStatus.status === 'ativo' ? (
+                                <>
+                                    Deseja realmente desativar o setor{' '}
+                                    <strong>{setorStatus.nome}</strong>?
+                                    Ele não poderá ser selecionado em novos registros,
+                                    mas seu histórico será preservado.
+                                </>
+                            ) : (
+                                <>
+                                    Deseja ativar novamente o setor{' '}
+                                    <strong>{setorStatus.nome}</strong>?
+                                    Ele poderá ser selecionado em novos registros.
+                                </>
+                            )}
                         </p>
 
                         <div className="setores-modal-actions">
                             <button
                                 type="button"
                                 className="setores-secondary-btn"
-                                onClick={() => setSetorExcluir(null)}
-                                disabled={excluindo}
+                                onClick={() => setSetorStatus(null)}
+                                disabled={alterandoStatus}
                             >
                                 Cancelar
                             </button>
 
                             <button
                                 type="button"
-                                className="setores-danger-btn"
-                                onClick={excluirSetor}
-                                disabled={excluindo}
+                                className="setores-primary-btn"
+                                onClick={alterarStatusSetor}
+                                disabled={alterandoStatus}
                             >
-                                {excluindo ? 'Excluindo...' : 'Sim, excluir'}
+                                {alterandoStatus ? (
+                                    <>
+                                        <span className="setores-button-loader"></span>
+                                        Atualizando...
+                                    </>
+                                ) : (
+                                    <>
+                                        <i
+                                            className={`bi ${setorStatus.status === 'ativo'
+                                                    ? 'bi-pause-circle'
+                                                    : 'bi-check2-circle'
+                                                }`}
+                                        ></i>
+                                        {setorStatus.status === 'ativo'
+                                            ? 'Sim, desativar'
+                                            : 'Sim, ativar'}
+                                    </>
+                                )}
                             </button>
                         </div>
                     </div>

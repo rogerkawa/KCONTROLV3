@@ -147,6 +147,67 @@ const setorController = {
       });
     }
   },
+  async alterarStatus(req, res) {
+    try {
+        const id = Number(req.params.id);
+        const { status } = req.body;
+
+        if (!Number.isSafeInteger(id) || id <= 0) {
+            return res.status(400).json({
+                mensagem: "ID do setor inválido.",
+            });
+        }
+
+        if (!["ativo", "inativo"].includes(status)) {
+            return res.status(400).json({
+                mensagem: "Status inválido.",
+            });
+        }
+
+        const setor = await setorModel.buscarPorId(
+            id,
+            req.user.id_empresa
+        );
+
+        if (!setor) {
+            return res.status(404).json({
+                mensagem: "Setor não encontrado.",
+            });
+        }
+
+        if (setor.status === status) {
+            return res.status(200).json({
+                mensagem: `Este setor já está ${status}.`,
+            });
+        }
+
+        await setorModel.atualizarStatus(
+            id,
+            req.user.id_empresa,
+            status
+        );
+
+        await auditoriaModel.registrar(
+            req.user.id_empresa,
+            req.user.id_usuario,
+            status === "ativo" ? "setor.ativado" : "setor.desativado",
+            `${status === "ativo" ? "Ativou" : "Desativou"} o setor ${setor.nome}.`,
+        );
+
+        return res.status(200).json({
+            mensagem: status === "ativo"
+                ? "Setor ativado com sucesso!"
+                : "Setor desativado com sucesso!",
+        });
+
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            mensagem: "Erro ao alterar status do setor.",
+        });
+    }
+},
 
   async excluir(req, res) {
     try {

@@ -169,6 +169,10 @@ const registroController = {
           409,
           "Já existe uma retirada ativa para esta sala, data e turno.",
         ],
+        SETOR_INATIVO: [
+          409,
+          "Este setor está inativo e não pode receber novos registros.",
+        ],
       };
 
       if (erros[error.message]) {

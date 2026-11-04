@@ -1,6 +1,4 @@
-/* ==============================
-   PÁGINA
-============================== */
+
 
 .setores-page {
     width: 100%;
@@ -23,9 +21,7 @@
     }
 }
 
-/* ==============================
-   CABEÇALHO
-============================== */
+
 
 .setores-header {
     display: flex;
@@ -139,9 +135,7 @@
     }
 }
 
-/* ==============================
-   INDICADORES
-============================== */
+
 
 .setores-stats {
     display: grid;
@@ -234,9 +228,6 @@
     line-height: 1.6;
 }
 
-/* ==============================
-   CONTEÚDO / PESQUISA
-============================== */
 
 .setores-content {
     overflow: hidden;
@@ -324,9 +315,6 @@
     cursor: pointer;
 }
 
-/* ==============================
-   TABELA
-============================== */
 
 .setores-table-wrapper {
     width: 100%;
@@ -459,9 +447,6 @@
     color: var(--danger);
 }
 
-/* ==============================
-   ESTADOS
-============================== */
 
 .setores-state {
     min-height: 280px;
@@ -543,10 +528,6 @@
         transform: rotate(360deg);
     }
 }
-
-/* ==============================
-   MODAIS
-============================== */
 
 .setores-modal-overlay {
     position: fixed;
@@ -692,6 +673,59 @@
     transform: translateY(-2px);
 }
 
+/* Status dos setores */
+.setor-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 11px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.setor-status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+}
+
+.setor-status.ativo {
+    color: #3a9b70;
+    background: rgba(58, 155, 112, 0.12);
+}
+
+.setor-status.ativo .setor-status-dot {
+    background: #3a9b70;
+}
+
+.setor-status.inativo {
+    color: #d18b55;
+    background: rgba(209, 139, 85, 0.12);
+}
+
+.setor-status.inativo .setor-status-dot {
+    background: #d18b55;
+}
+
+/* Ações */
+.setor-actions button.activate {
+    color: #3a9b70;
+}
+
+.setor-actions button.deactivate {
+    color: #d18b55;
+}
+
+.setor-actions button.activate:hover {
+    background: rgba(58, 155, 112, 0.12);
+}
+
+.setor-actions button.deactivate:hover {
+    background: rgba(209, 139, 85, 0.12);
+}
+
 /* Confirmação */
 .setores-confirm-modal {
     max-width: 390px;
@@ -729,9 +763,6 @@
     justify-content: center;
 }
 
-/* ==============================
-   TOAST
-============================== */
 
 .setores-toast {
     position: fixed;
@@ -792,9 +823,6 @@
     cursor: pointer;
 }
 
-/* ==============================
-   RESPONSIVIDADE
-============================== */
 
 @media (max-width: 850px) {
     .setores-stats {

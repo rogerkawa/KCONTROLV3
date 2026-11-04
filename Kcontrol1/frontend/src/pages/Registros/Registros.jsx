@@ -45,7 +45,7 @@ function Registros() {
     const [filtroSala, setFiltroSala] = useState('todos');
     const [filtroSetor, setFiltroSetor] = useState('todos');
 
-    
+
 
     const buscarDados = useCallback(async (silencioso = false) => {
         if (silencioso) {
@@ -266,45 +266,45 @@ function Registros() {
     };
 
     const abrirConfirmacaoDevolucao = (registro) => {
-    if (devolvendo) return;
+        if (devolvendo) return;
 
-    setRegistroParaDevolver(registro);
-};
+        setRegistroParaDevolver(registro);
+    };
 
-const fecharConfirmacaoDevolucao = () => {
-    if (devolvendo) return;
-
-    setRegistroParaDevolver(null);
-};
-
-const registrarDevolucao = async () => {
-    if (!registroParaDevolver || devolvendo) return;
-
-    const registro = registroParaDevolver;
-
-    setDevolvendo(registro.id_registro);
-
-    try {
-        await api.patch(`/registros/${registro.id_registro}/devolver`);
-
-        if (registroSelecionado?.id_registro === registro.id_registro) {
-            setRegistroSelecionado(null);
-        }
+    const fecharConfirmacaoDevolucao = () => {
+        if (devolvendo) return;
 
         setRegistroParaDevolver(null);
+    };
 
-        notificar('sucesso', 'Devolução registrada com sucesso!');
+    const registrarDevolucao = async () => {
+        if (!registroParaDevolver || devolvendo) return;
 
-        await buscarDados(true);
-    } catch (error) {
-        notificar(
-            'erro',
-            error.message || 'Não foi possível registrar a devolução.'
-        );
-    } finally {
-        setDevolvendo(null);
-    }
-};
+        const registro = registroParaDevolver;
+
+        setDevolvendo(registro.id_registro);
+
+        try {
+            await api.patch(`/registros/${registro.id_registro}/devolver`);
+
+            if (registroSelecionado?.id_registro === registro.id_registro) {
+                setRegistroSelecionado(null);
+            }
+
+            setRegistroParaDevolver(null);
+
+            notificar('sucesso', 'Devolução registrada com sucesso!');
+
+            await buscarDados(true);
+        } catch (error) {
+            notificar(
+                'erro',
+                error.message || 'Não foi possível registrar a devolução.'
+            );
+        } finally {
+            setDevolvendo(null);
+        }
+    };
 
     const limparFiltros = () => {
         setBusca('');
@@ -611,11 +611,10 @@ const registrarDevolucao = async () => {
                                         </td>
 
                                         <td>
-                                            <span className={`registro-status ${
-                                                registro.status === 'retirada'
-                                                    ? 'status-active'
-                                                    : 'status-returned'
-                                            }`}>
+                                            <span className={`registro-status ${registro.status === 'retirada'
+                                                ? 'status-active'
+                                                : 'status-returned'
+                                                }`}>
                                                 <i className="bi bi-circle-fill"></i>
                                                 {nomeStatus(registro.status)}
                                             </span>
@@ -733,14 +732,16 @@ const registrarDevolucao = async () => {
                                     >
                                         <option value="">Selecione um setor</option>
 
-                                        {setores.map((setor) => (
-                                            <option
-                                                key={setor.id_setor}
-                                                value={setor.id_setor}
-                                            >
-                                                {setor.nome}
-                                            </option>
-                                        ))}
+                                        {setores
+                                            .filter((setor) => setor.status === 'ativo')
+                                            .map((setor) => (
+                                                <option
+                                                    key={setor.id_setor}
+                                                    value={setor.id_setor}
+                                                >
+                                                    {setor.nome}
+                                                </option>
+                                            ))}
                                     </select>
                                 </label>
 
@@ -847,7 +848,7 @@ const registrarDevolucao = async () => {
                                     disabled={
                                         salvando ||
                                         !salasDisponiveis.length ||
-                                        !setores.length
+                                        !setores.some((setor) => setor.status === 'ativo')
                                     }
                                 >
                                     {salvando ? (
@@ -904,11 +905,10 @@ const registrarDevolucao = async () => {
                         </div>
 
                         <div className="registro-details-status">
-                            <span className={`registro-status ${
-                                registroSelecionado.status === 'retirada'
-                                    ? 'status-active'
-                                    : 'status-returned'
-                            }`}>
+                            <span className={`registro-status ${registroSelecionado.status === 'retirada'
+                                ? 'status-active'
+                                : 'status-returned'
+                                }`}>
                                 <i className="bi bi-circle-fill"></i>
                                 {nomeStatus(registroSelecionado.status)}
                             </span>
@@ -983,90 +983,90 @@ const registrarDevolucao = async () => {
                     </section>
                 </div>
             )}
-            
-{/* Modal de confirmação de devolução */}
-{registroParaDevolver && (
-    <div
-        className="registros-modal-overlay"
-        onMouseDown={(event) => {
-            if (event.target === event.currentTarget) {
-                fecharConfirmacaoDevolucao();
-            }
-        }}
-    >
-        <section
-            className="registros-modal registros-confirm-modal"
-            role="alertdialog"
-            aria-modal="true"
-            aria-labelledby="confirm-devolucao-title"
-            aria-describedby="confirm-devolucao-description"
-        >
-            <div className="registros-confirm-content">
 
-                <div className="registros-confirm-icon">
-                    <i className="bi bi-arrow-return-left"></i>
-                </div>
-
-                <span className="registros-eyebrow">
-                    CONFIRMAÇÃO DE AÇÃO
-                </span>
-
-                <h2 id="confirm-devolucao-title">
-                    Confirmar devolução?
-                </h2>
-
-                <p id="confirm-devolucao-description">
-                    Você está prestes a registrar a devolução da sala
-                    <strong> {registroParaDevolver.nome_sala}</strong>.
-                    Deseja continuar?
-                </p>
-
-                <div className="registros-confirm-info">
-                    <div>
-                        <span>Sala</span>
-                        <strong>{registroParaDevolver.nome_sala}</strong>
-                    </div>
-
-                    <div>
-                        <span>Responsável</span>
-                        <strong>{registroParaDevolver.responsavel}</strong>
-                    </div>
-                </div>
-
-            </div>
-
-            <div className="registros-modal-footer">
-                <button
-                    type="button"
-                    className="registros-secondary-button"
-                    onClick={fecharConfirmacaoDevolucao}
-                    disabled={devolvendo !== null}
+            {/* Modal de confirmação de devolução */}
+            {registroParaDevolver && (
+                <div
+                    className="registros-modal-overlay"
+                    onMouseDown={(event) => {
+                        if (event.target === event.currentTarget) {
+                            fecharConfirmacaoDevolucao();
+                        }
+                    }}
                 >
-                    Cancelar
-                </button>
+                    <section
+                        className="registros-modal registros-confirm-modal"
+                        role="alertdialog"
+                        aria-modal="true"
+                        aria-labelledby="confirm-devolucao-title"
+                        aria-describedby="confirm-devolucao-description"
+                    >
+                        <div className="registros-confirm-content">
 
-                <button
-                    type="button"
-                    className="registros-primary-button"
-                    onClick={registrarDevolucao}
-                    disabled={devolvendo !== null}
-                >
-                    {devolvendo === registroParaDevolver.id_registro ? (
-                        <>
-                            <i className="bi bi-arrow-repeat"></i>
-                            Processando...
-                        </>
-                    ) : (
-                        <>
-                            <i className="bi bi-check2"></i>
-                            Confirmar devolução
-                        </>
-                    )}
-                </button>
-            </div>
-        </section>
-    </div>
-)}
+                            <div className="registros-confirm-icon">
+                                <i className="bi bi-arrow-return-left"></i>
+                            </div>
+
+                            <span className="registros-eyebrow">
+                                CONFIRMAÇÃO DE AÇÃO
+                            </span>
+
+                            <h2 id="confirm-devolucao-title">
+                                Confirmar devolução?
+                            </h2>
+
+                            <p id="confirm-devolucao-description">
+                                Você está prestes a registrar a devolução da sala
+                                <strong> {registroParaDevolver.nome_sala}</strong>.
+                                Deseja continuar?
+                            </p>
+
+                            <div className="registros-confirm-info">
+                                <div>
+                                    <span>Sala</span>
+                                    <strong>{registroParaDevolver.nome_sala}</strong>
+                                </div>
+
+                                <div>
+                                    <span>Responsável</span>
+                                    <strong>{registroParaDevolver.responsavel}</strong>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div className="registros-modal-footer">
+                            <button
+                                type="button"
+                                className="registros-secondary-button"
+                                onClick={fecharConfirmacaoDevolucao}
+                                disabled={devolvendo !== null}
+                            >
+                                Cancelar
+                            </button>
+
+                            <button
+                                type="button"
+                                className="registros-primary-button"
+                                onClick={registrarDevolucao}
+                                disabled={devolvendo !== null}
+                            >
+                                {devolvendo === registroParaDevolver.id_registro ? (
+                                    <>
+                                        <i className="bi bi-arrow-repeat"></i>
+                                        Processando...
+                                    </>
+                                ) : (
+                                    <>
+                                        <i className="bi bi-check2"></i>
+                                        Confirmar devolução
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </section>
+                </div>
+            )}
 
 
         </div>

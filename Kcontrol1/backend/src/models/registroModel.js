@@ -112,6 +112,9 @@ const registroModel = {
             if (!setores.length) {
                 throw new Error('SETOR_NAO_ENCONTRADO');
             }
+            if (setores[0].status !== 'ativo') {
+                throw new Error('SETOR_INATIVO');
+            }
 
             // Bloqueia a sala durante a operação.
             const [salas] = await conexao.execute(

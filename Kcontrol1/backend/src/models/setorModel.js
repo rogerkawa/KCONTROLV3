@@ -1,4 +1,3 @@
-
 import conect from '../config/database.js';
 
 const setorModel = {
@@ -8,6 +7,7 @@ const setorModel = {
             `SELECT
                 id_setor,
                 nome,
+                status,
                 created_at
             FROM setores
             WHERE id_empresa = ?
@@ -23,6 +23,7 @@ const setorModel = {
             `SELECT
                 id_setor,
                 nome,
+                status,
                 created_at
             FROM setores
             WHERE id_setor = ? AND id_empresa = ?
@@ -49,6 +50,17 @@ const setorModel = {
             SET nome = ?
             WHERE id_setor = ? AND id_empresa = ?`,
             [nome, id_setor, id_empresa]
+        );
+
+        return resultado.affectedRows;
+    },
+
+    async atualizarStatus(id_setor, id_empresa, status) {
+        const [resultado] = await conect.execute(
+            `UPDATE setores
+            SET status = ?
+            WHERE id_setor = ? AND id_empresa = ?`,
+            [status, id_setor, id_empresa]
         );
 
         return resultado.affectedRows;
