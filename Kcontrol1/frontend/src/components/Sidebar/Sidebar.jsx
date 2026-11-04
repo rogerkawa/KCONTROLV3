@@ -1,5 +1,6 @@
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useTemaAtual } from '../../hooks/useTemaAtual';
 import "./Sidebar.css";
 
 const menus = {
@@ -53,16 +54,17 @@ function Sidebar({ collapsed = false }) {
       user: "Usuário",
     }[cargo] || "Usuário";
 
+
+  const tema = useTemaAtual();
   return (
     <aside className={`sidebar ${collapsed ? "sidebar-collapsed" : ""}`}>
       {/* MARCA */}
       <div className="sidebar-brand">
         <div className="sidebar-logo">
           <img
-            src={
-              document.documentElement.getAttribute('data-theme') === 'dark'
-                ? '/images/logo-branca.png'
-                : '/images/logo-preta.png'
+            src={tema === 'dark'
+              ? '/images/logo-branca.png'
+              : '/images/logo-preta.png'
             }
             alt="Logo KControl"
           />

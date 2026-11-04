@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useTemaAtual } from '../../hooks/useTemaAtual';
 import './Configuracoes.css';
 
 function Configuracoes() {
@@ -60,6 +61,8 @@ function Configuracoes() {
         admin: 'Administrador',
         user: 'Usuário'
     }[usuario?.role?.toLowerCase()] || 'Usuário';
+
+    const temaAtual = useTemaAtual();
 
     return (
         <section className="config-page">
@@ -277,14 +280,15 @@ function Configuracoes() {
                     <div className="config-about-content">
                         <div className="config-about-brand">
                             <div className="config-about-logo">
-                                <img
-                                    src={
-                                        document.documentElement.getAttribute('data-theme') === 'dark'
+                                <div className="sidebar-logo">
+                                    <img
+                                        src={temaAtual === 'dark'
                                             ? '/images/logo-branca.png'
                                             : '/images/logo-preta.png'
-                                    }
-                                    alt="Logo KControl"
-                                />
+                                        }
+                                        alt="Logo KControl"
+                                    />
+                                </div>
                             </div>
 
                             <div>
