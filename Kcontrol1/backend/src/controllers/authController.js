@@ -15,7 +15,7 @@ const COOKIE_MFA_PENDING = 'kcontrol_mfa_pending';
 const opcoesCookie = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    sameSite: 'lax',
     path: '/',
     maxAge: 24 * 60 * 60 * 1000
 };
@@ -23,7 +23,7 @@ const opcoesCookie = {
 const opcoesCookieMFA = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    sameSite: 'lax',
     path: '/',
     maxAge: 5 * 60 * 1000
 };
