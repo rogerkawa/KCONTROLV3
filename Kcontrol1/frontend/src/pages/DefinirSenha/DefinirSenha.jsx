@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useToast } from "../../context/ToastContext";
 
 import api from "../../services/api";
 import "./DefinirSenha.css";
@@ -26,6 +27,8 @@ const DefinirSenha = () => {
   const [sucesso, setSucesso] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const { logout } = useAuth();
+  const { mostrarToast } = useToast();
+  const invalidToastRef = useRef(false);
 
   // Validar convite ao abrir a página
   useEffect(() => {
@@ -61,12 +64,12 @@ const DefinirSenha = () => {
     setErro("");
 
     if (senha.length < 12) {
-      setErro("Sua senha deve possuir pelo menos 12 caracteres.");
+      mostrarToast("Sua senha deve possuir pelo menos 12 caracteres.", "warning");
       return;
     }
 
     if (senha !== confirmarSenha) {
-      setErro("As senhas não coincidem.");
+      mostrarToast("As senhas não coincidem.", "warning");
       return;
     }
 
@@ -79,13 +82,30 @@ const DefinirSenha = () => {
         confirmarSenha,
       });
 
+      mostrarToast("Conta ativada com sucesso!", "success");
       setSucesso(true);
       setConviteValido(false);
     } catch (error) {
-      setErro(error.message || "Não foi possível ativar sua conta.");
+      mostrarToast(error.message || "Não foi possível ativar sua conta.", "error");
     } finally {
       setSalvando(false);
     }
+  }
+
+  function avisarFormularioInvalido(event) {
+    event.preventDefault();
+
+    if (invalidToastRef.current) return;
+
+    invalidToastRef.current = true;
+    const mensagem = event.target.validity.valueMissing
+      ? "Preencha todos os campos obrigatórios."
+      : "Verifique os dados informados.";
+
+    mostrarToast(mensagem, "warning");
+    window.setTimeout(() => {
+      invalidToastRef.current = false;
+    }, 1000);
   }
 
   // Carregamento
@@ -122,7 +142,7 @@ const DefinirSenha = () => {
           <button
             className="definir-button"
             onClick={() => {
-              logout();
+              logout({ silencioso: true });
               navigate("/login", { replace: true });
             }}
           >
@@ -189,7 +209,10 @@ const DefinirSenha = () => {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit}>
+        <form
+          onSubmit={handleSubmit}
+          onInvalidCapture={avisarFormularioInvalido}
+        >
           <div className="definir-field">
             <label htmlFor="senha">Nova senha</label>
 

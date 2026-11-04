@@ -1,23 +1,22 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useToast } from "../../context/ToastContext";
 import "./Login.css";
 
 function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { mostrarToast } = useToast();
+  const invalidToastRef = useRef(false);
 
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [carregando, setCarregando] = useState(false);
-  const [erro, setErro] = useState("");
-
-  
 async function handleSubmit(e) {
   e.preventDefault();
 
-  setErro("");
   setCarregando(true);
 
   try {
@@ -25,6 +24,11 @@ async function handleSubmit(e) {
 
     // SuperAdmin: encaminha para a etapa de MFA.
     if (resultado.requiresMfa) {
+      mostrarToast(
+        "Credenciais confirmadas. Conclua a verificação em duas etapas.",
+        "info"
+      );
+
       if (resultado.mfaConfigured) {
         navigate("/mfa/verificar", { replace: true });
       } else {
@@ -35,6 +39,7 @@ async function handleSubmit(e) {
     }
 
     const usuarioLogado = resultado.usuario;
+    mostrarToast("Login realizado com sucesso!", "success");
 
     if (usuarioLogado.role === "user") {
       navigate("/registros", { replace: true });
@@ -43,14 +48,30 @@ async function handleSubmit(e) {
     }
 
   } catch (error) {
-    setErro(
-      error.message || "Não foi possível entrar na plataforma."
+    mostrarToast(
+      error.message || "Não foi possível entrar na plataforma.",
+      "error"
     );
   } finally {
     setCarregando(false);
   }
 }
 
+function avisarFormularioInvalido(event) {
+  event.preventDefault();
+
+  if (invalidToastRef.current) return;
+
+  invalidToastRef.current = true;
+  const mensagem = event.target.validity.valueMissing
+    ? "Preencha todos os campos obrigatórios."
+    : "Verifique os dados informados.";
+
+  mostrarToast(mensagem, "warning");
+  window.setTimeout(() => {
+    invalidToastRef.current = false;
+  }, 1000);
+}
 
   return (
     <main className="login-page">
@@ -85,7 +106,11 @@ async function handleSubmit(e) {
             </p>
           </div>
 
-          <form className="login-form" onSubmit={handleSubmit}>
+          <form
+            className="login-form"
+            onSubmit={handleSubmit}
+            onInvalidCapture={avisarFormularioInvalido}
+          >
             <div className="form-group">
               <label htmlFor="email">E-mail</label>
 
@@ -134,13 +159,6 @@ async function handleSubmit(e) {
                 </button>
               </div>
             </div>
-
-            {erro && (
-              <div className="login-error" role="alert">
-                <i className="bi bi-exclamation-circle"></i>
-                <span>{erro}</span>
-              </div>
-            )}
 
             <button
               type="submit"

@@ -1,12 +1,15 @@
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../../services/api';
+import { useToast } from '../../context/ToastContext';
 import './ConfigurarMFA.css';
 import './VerificarMFA.css';
 
 function ConfigurarMFA() {
     const navigate = useNavigate();
+    const { mostrarToast } = useToast();
+    const invalidToastRef = useRef(false);
 
     const [qrCode, setQrCode] = useState('');
     const [segredo, setSegredo] = useState('');
@@ -51,7 +54,7 @@ function ConfigurarMFA() {
         setErro('');
 
         if (!/^\d{6}$/.test(codigo)) {
-            setErro('Digite um código válido de 6 dígitos.');
+            mostrarToast('Digite um código válido de 6 dígitos.', 'warning');
             return;
         }
 
@@ -66,9 +69,10 @@ function ConfigurarMFA() {
                 resposta.recoveryCodes || resposta.codigosRecuperacao || []
             );
 
+            mostrarToast('Autenticação em duas etapas ativada com sucesso!', 'success');
             setEtapa('recuperacao');
         } catch (error) {
-            setErro(error.message || 'Não foi possível ativar a autenticação.');
+            mostrarToast(error.message || 'Não foi possível ativar a autenticação.', 'error');
         } finally {
             setAtivando(false);
         }
@@ -82,8 +86,20 @@ function ConfigurarMFA() {
 
             setCopiado(true);
         } catch {
-            setErro('Não foi possível copiar os códigos.');
+            mostrarToast('Não foi possível copiar os códigos de recuperação.', 'error');
         }
+    }
+
+    function avisarFormularioInvalido(event) {
+        event.preventDefault();
+
+        if (invalidToastRef.current) return;
+
+        invalidToastRef.current = true;
+        mostrarToast('Informe o código de autenticação.', 'warning');
+        window.setTimeout(() => {
+            invalidToastRef.current = false;
+        }, 1000);
     }
 
     return (
@@ -189,7 +205,11 @@ function ConfigurarMFA() {
                                     </div>
                                 </div>
 
-                                <form onSubmit={handleSubmit} className="mfa-form">
+                                <form
+                                    onSubmit={handleSubmit}
+                                    onInvalidCapture={avisarFormularioInvalido}
+                                    className="mfa-form"
+                                >
                                     <label htmlFor="codigoMFA">
                                         Código do aplicativo
                                     </label>
@@ -211,13 +231,6 @@ function ConfigurarMFA() {
                                         }
                                         required
                                     />
-
-                                    {erro && (
-                                        <div className="mfa-error">
-                                            <i className="bi bi-exclamation-circle" />
-                                            {erro}
-                                        </div>
-                                    )}
 
                                     <button
                                         type="submit"

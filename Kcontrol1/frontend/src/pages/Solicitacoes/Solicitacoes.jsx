@@ -1,6 +1,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import api from '../../services/api';
+import { useToast } from '../../context/ToastContext';
 import './Solicitacoes.css';
 
 const filtros = [
@@ -56,6 +57,7 @@ function formatarDataHora(data) {
 }
 
 function Solicitacoes() {
+    const { mostrarToast } = useToast();
     const [solicitacoes, setSolicitacoes] = useState([]);
     const [carregando, setCarregando] = useState(true);
     const [erro, setErro] = useState('');
@@ -73,7 +75,6 @@ function Solicitacoes() {
 
     const [conviteGerado, setConviteGerado] = useState(null);
     const [erroAcao, setErroAcao] = useState('');
-    const [mensagem, setMensagem] = useState('');
 
     async function carregarSolicitacoes() {
         setCarregando(true);
@@ -155,7 +156,7 @@ function Solicitacoes() {
         if (!solicitacaoAcao || processando) return;
 
         if (tipoAcao === 'rejeitar' && motivo.trim().length < 5) {
-            setErroAcao('Informe um motivo com pelo menos 5 caracteres.');
+            mostrarToast('Informe um motivo com pelo menos 5 caracteres.', 'warning');
             return;
         }
 
@@ -214,17 +215,21 @@ function Solicitacoes() {
                 }));
             }
 
-            setMensagem(
+            mostrarToast(
                 tipoAcao === 'aprovar'
-                    ? 'Solicitação aprovada com sucesso.'
-                    : 'Solicitação rejeitada com sucesso.'
+                    ? 'Solicitação aprovada com sucesso!'
+                    : 'Solicitação rejeitada com sucesso!',
+                'success'
             );
 
             setSolicitacaoAcao(null);
             setTipoAcao('');
 
         } catch (error) {
-            setErroAcao(error.message || 'Não foi possível processar a solicitação.');
+            mostrarToast(
+                error.message || 'Não foi possível processar a solicitação.',
+                'error'
+            );
         } finally {
             setProcessando(false);
         }
@@ -281,16 +286,6 @@ function Solicitacoes() {
                     <span>Atualizar</span>
                 </button>
             </header>
-
-            {mensagem && (
-                <div className="solicitacoes-alert sucesso">
-                    <i className="bi bi-check-circle"></i>
-                    {mensagem}
-                    <button onClick={() => setMensagem('')}>
-                        <i className="bi bi-x"></i>
-                    </button>
-                </div>
-            )}
 
             <div className="solicitacoes-stats">
 

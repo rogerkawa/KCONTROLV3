@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import './Salas.css';
 
 const statusInfo = {
@@ -28,6 +29,8 @@ const statusInfo = {
 
 function Salas() {
     const { usuario } = useAuth();
+    const { mostrarToast } = useToast();
+    const invalidToastRef = useRef(false);
     const isAdmin = usuario?.role?.toLowerCase() === 'admin';
 
     const [salas, setSalas] = useState([]);
@@ -45,22 +48,6 @@ function Salas() {
 
     const [salaExcluir, setSalaExcluir] = useState(null);
     const [excluindo, setExcluindo] = useState(false);
-
-    const [toast, setToast] = useState(null);
-
-    const mostrarToast = (mensagem, tipo = 'sucesso') => {
-        setToast({ mensagem, tipo });
-    };
-
-    useEffect(() => {
-        if (!toast) return;
-
-        const timer = setTimeout(() => {
-            setToast(null);
-        }, 3500);
-
-        return () => clearTimeout(timer);
-    }, [toast]);
 
     const carregarSalas = useCallback(async (silencioso = false) => {
         try {
@@ -135,7 +122,18 @@ function Salas() {
         setNome('');
     };
 
-    
+    const avisarFormularioInvalido = event => {
+        event.preventDefault();
+
+        if (invalidToastRef.current) return;
+
+        invalidToastRef.current = true;
+        mostrarToast('Informe o nome da sala.', 'warning');
+        window.setTimeout(() => {
+            invalidToastRef.current = false;
+        }, 1000);
+    };
+
 const salvarSala = async event => {
     event.preventDefault();
 
@@ -147,7 +145,7 @@ const salvarSala = async event => {
             const nomeFormatado = nome.trim();
 
             if (!nomeFormatado) {
-                mostrarToast('Informe o nome da sala.', 'erro');
+                mostrarToast('Informe o nome da sala.', 'warning');
                 return;
             }
 
@@ -155,7 +153,7 @@ const salvarSala = async event => {
                 nome: nomeFormatado
             });
 
-            mostrarToast('Sala cadastrada com sucesso!');
+            mostrarToast('Sala cadastrada com sucesso!', 'success');
         }
 
         // EDITAR NOME DA SALA
@@ -163,7 +161,7 @@ const salvarSala = async event => {
             const nomeFormatado = nome.trim();
 
             if (!nomeFormatado) {
-                mostrarToast('Informe o nome da sala.', 'erro');
+                mostrarToast('Informe o nome da sala.', 'warning');
                 return;
             }
 
@@ -171,7 +169,7 @@ const salvarSala = async event => {
                 nome: nomeFormatado
             });
 
-            mostrarToast('Sala atualizada com sucesso!');
+            mostrarToast('Sala atualizada com sucesso!', 'success');
         }
 
         // ALTERAR STATUS DA SALA
@@ -180,7 +178,7 @@ const salvarSala = async event => {
                 status: statusSelecionado
             });
 
-            mostrarToast('Status atualizado com sucesso!');
+            mostrarToast('Status da sala atualizado com sucesso!', 'success');
         }
 
         setModal(null);
@@ -191,7 +189,7 @@ const salvarSala = async event => {
     } catch (error) {
         mostrarToast(
             error.message || 'Não foi possível salvar a sala.',
-            'erro'
+            'error'
         );
     } finally {
         setSalvando(false);
@@ -207,12 +205,12 @@ const salvarSala = async event => {
 
             await api.delete(`/salas/${salaExcluir.id_sala}`);
 
-            mostrarToast('Sala excluída com sucesso!');
+            mostrarToast('Sala excluída com sucesso!', 'success');
             setSalaExcluir(null);
 
             await carregarSalas(true);
         } catch (error) {
-            mostrarToast(error.message || 'Não foi possível excluir a sala.', 'erro');
+            mostrarToast(error.message || 'Não foi possível excluir a sala.', 'error');
         } finally {
             setExcluindo(false);
         }
@@ -492,7 +490,11 @@ const salvarSala = async event => {
                         if (event.target === event.currentTarget) fecharModal();
                     }}
                 >
-                    <form className="salas-modal" onSubmit={salvarSala}>
+                    <form
+                        className="salas-modal"
+                        onSubmit={salvarSala}
+                        onInvalidCapture={avisarFormularioInvalido}
+                    >
                         <div className="salas-modal-header">
                             <div>
                                 <span className="salas-modal-eyebrow">
@@ -620,23 +622,6 @@ const salvarSala = async event => {
                 </div>
             )}
 
-            {/* Feedback */}
-            {toast && (
-                <div className={`salas-toast ${toast.tipo}`}>
-                    <i className={`bi ${toast.tipo === 'sucesso'
-                        ? 'bi-check-circle-fill'
-                        : 'bi-exclamation-circle-fill'}`}
-                    ></i>
-                    <span>{toast.mensagem}</span>
-                    <button
-                        type="button"
-                        onClick={() => setToast(null)}
-                        aria-label="Fechar aviso"
-                    >
-                        <i className="bi bi-x"></i>
-                    </button>
-                </div>
-            )}
         </section>
     );
 }

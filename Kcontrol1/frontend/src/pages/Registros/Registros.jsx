@@ -1,8 +1,9 @@
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 
 import './Registro.css';
 
@@ -17,6 +18,8 @@ const formularioInicial = {
 
 function Registros() {
     const { usuario } = useAuth();
+    const { mostrarToast } = useToast();
+    const invalidToastRef = useRef(false);
 
     const isAdmin = usuario?.role === 'admin';
 
@@ -27,8 +30,6 @@ function Registros() {
     const [carregando, setCarregando] = useState(true);
     const [atualizando, setAtualizando] = useState(false);
     const [erro, setErro] = useState('');
-    const [mensagem, setMensagem] = useState(null);
-
     const [modalAberto, setModalAberto] = useState(false);
     const [registroSelecionado, setRegistroSelecionado] = useState(null);
 
@@ -76,13 +77,30 @@ function Registros() {
     }, [buscarDados]);
 
     const notificar = (tipo, texto) => {
-        setMensagem({ tipo, texto });
+        const tipos = {
+            sucesso: 'success',
+            erro: 'error',
+            aviso: 'warning',
+            informacao: 'info'
+        };
 
-        window.clearTimeout(notificar.timeout);
+        mostrarToast(texto, tipos[tipo] || 'info');
+    };
 
-        notificar.timeout = window.setTimeout(() => {
-            setMensagem(null);
-        }, 4000);
+    const avisarFormularioInvalido = event => {
+        event.preventDefault();
+
+        if (invalidToastRef.current) return;
+
+        invalidToastRef.current = true;
+        const mensagem = event.target.validity.valueMissing
+            ? 'Preencha todos os campos obrigatórios.'
+            : 'Verifique os dados informados.';
+
+        mostrarToast(mensagem, 'warning');
+        window.setTimeout(() => {
+            invalidToastRef.current = false;
+        }, 1000);
     };
 
     const atualizarFormulario = (campo, valor) => {
@@ -213,12 +231,12 @@ function Registros() {
         event.preventDefault();
 
         if (!formulario.id_setor || !formulario.id_sala) {
-            notificar('erro', 'Selecione um setor e uma sala.');
+            notificar('aviso', 'Selecione um setor e uma sala.');
             return;
         }
 
         if (!formulario.responsavel.trim()) {
-            notificar('erro', 'Informe o nome do responsável.');
+            notificar('aviso', 'Informe o nome do responsável.');
             return;
         }
 
@@ -354,26 +372,6 @@ function Registros() {
                 <div className="registros-refresh-error">
                     <i className="bi bi-exclamation-circle"></i>
                     {erro}
-                </div>
-            )}
-
-            {/* Notificações */}
-            {mensagem && (
-                <div className={`registros-toast ${mensagem.tipo}`}>
-                    <i className={`bi ${
-                        mensagem.tipo === 'sucesso'
-                            ? 'bi-check-circle'
-                            : 'bi-exclamation-circle'
-                    }`}></i>
-
-                    <span>{mensagem.texto}</span>
-
-                    <button
-                        onClick={() => setMensagem(null)}
-                        aria-label="Fechar notificação"
-                    >
-                        <i className="bi bi-x"></i>
-                    </button>
                 </div>
             )}
 
@@ -700,7 +698,10 @@ function Registros() {
                             </button>
                         </div>
 
-                        <form onSubmit={registrarRetirada}>
+                        <form
+                            onSubmit={registrarRetirada}
+                            onInvalidCapture={avisarFormularioInvalido}
+                        >
                             <div className="registros-form-grid">
                                 <label className="registros-form-field">
                                     <span>Setor</span>

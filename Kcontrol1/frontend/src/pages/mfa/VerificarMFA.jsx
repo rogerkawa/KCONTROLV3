@@ -1,31 +1,32 @@
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import './VerificarMFA.css';
 
 function VerificarMFA() {
     const { verificarMFA } = useAuth();
+    const { mostrarToast } = useToast();
     const navigate = useNavigate();
 
     const [codigo, setCodigo] = useState('');
     const [usarRecuperacao, setUsarRecuperacao] = useState(false);
-    const [erro, setErro] = useState('');
     const [carregando, setCarregando] = useState(false);
+    const invalidToastRef = useRef(false);
 
     async function handleSubmit(e) {
         e.preventDefault();
-        setErro('');
 
         const valor = codigo.trim();
 
         if (!valor) {
-            setErro('Informe o código de autenticação.');
+            mostrarToast('Informe o código de autenticação.', 'warning');
             return;
         }
 
         if (!usarRecuperacao && !/^\d{6}$/.test(valor)) {
-            setErro('Digite os 6 dígitos do aplicativo autenticador.');
+            mostrarToast('Digite os 6 dígitos do aplicativo autenticador.', 'warning');
             return;
         }
 
@@ -33,17 +34,29 @@ function VerificarMFA() {
 
         try {
             await verificarMFA(valor);
+            mostrarToast('Autenticação confirmada com sucesso!', 'success');
             navigate('/dashboard', { replace: true });
         } catch (error) {
-            setErro(error.message || 'Não foi possível verificar o código.');
+            mostrarToast(error.message || 'Não foi possível verificar o código.', 'error');
         } finally {
             setCarregando(false);
         }
     }
 
+    function avisarFormularioInvalido(event) {
+        event.preventDefault();
+
+        if (invalidToastRef.current) return;
+
+        invalidToastRef.current = true;
+        mostrarToast('Informe o código de autenticação.', 'warning');
+        window.setTimeout(() => {
+            invalidToastRef.current = false;
+        }, 1000);
+    }
+
     function alternarMetodo() {
         setCodigo('');
-        setErro('');
         setUsarRecuperacao(valor => !valor);
     }
 
@@ -79,7 +92,11 @@ function VerificarMFA() {
                     </p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="mfa-form">
+                <form
+                    onSubmit={handleSubmit}
+                    onInvalidCapture={avisarFormularioInvalido}
+                    className="mfa-form"
+                >
 
                     <label htmlFor="mfaCodigo">
                         {usarRecuperacao
@@ -104,13 +121,6 @@ function VerificarMFA() {
                         autoFocus
                         required
                     />
-
-                    {erro && (
-                        <div className="mfa-error">
-                            <i className="bi bi-exclamation-circle"></i>
-                            {erro}
-                        </div>
-                    )}
 
                     <button
                         type="submit"

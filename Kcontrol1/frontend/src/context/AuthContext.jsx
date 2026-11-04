@@ -7,10 +7,12 @@ import {
 } from 'react';
 
 import api from '../services/api';
+import { useToast } from './ToastContext';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
+    const { mostrarToast } = useToast();
     const [usuario, setUsuario] = useState(null);
     const [carregando, setCarregando] = useState(true);
 
@@ -19,7 +21,7 @@ export function AuthProvider({ children }) {
             try {
                 const resposta = await api.get('/auth/me');
                 setUsuario(resposta.usuario);
-            } catch (error) {
+            } catch {
                 setUsuario(null);
             } finally {
                 setCarregando(false);
@@ -70,11 +72,22 @@ export function AuthProvider({ children }) {
         }));
     }
 
-    async function logout() {
+    async function logout({ silencioso = false } = {}) {
         try {
             await api.post('/auth/logout', {});
+
+            if (!silencioso) {
+                mostrarToast('Sessão encerrada com sucesso!', 'success');
+            }
         } catch (error) {
             console.error('Erro ao encerrar sessão:', error);
+
+            if (!silencioso) {
+                mostrarToast(
+                    error.message || 'Não foi possível encerrar a sessão.',
+                    'error'
+                );
+            }
         } finally {
             setUsuario(null);
         }

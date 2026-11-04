@@ -2,13 +2,16 @@
 import { useEffect, useRef, useState } from 'react';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import './Perfil.css';
 
 function Perfil() {
     const { usuario, atualizarUsuario } = useAuth();
+    const { mostrarToast } = useToast();
 
     const [perfil, setPerfil] = useState(null);
     const [carregando, setCarregando] = useState(true);
+    const [erroCarregamento, setErroCarregamento] = useState('');
     const [salvando, setSalvando] = useState(false);
     const [enviandoFoto, setEnviandoFoto] = useState(false);
     const [removendoFoto, setRemovendoFoto] = useState(false);
@@ -25,23 +28,24 @@ function Perfil() {
     const [mostrarNovaSenha, setMostrarNovaSenha] = useState(false);
 
     const [preview, setPreview] = useState(null);
-    const [mensagem, setMensagem] = useState(null);
-
     const inputAvatarRef = useRef(null);
+    const invalidToastRef = useRef(false);
 
     function notificar(tipo, texto) {
-        setMensagem({ tipo, texto });
+        const tipos = {
+            sucesso: 'success',
+            erro: 'error',
+            aviso: 'warning',
+            informacao: 'info'
+        };
 
-        window.clearTimeout(notificar.timeout);
-
-        notificar.timeout = window.setTimeout(() => {
-            setMensagem(null);
-        }, 4000);
+        mostrarToast(texto, tipos[tipo] || 'info');
     }
 
     async function carregarPerfil() {
         try {
             setCarregando(true);
+            setErroCarregamento('');
 
             const resposta = await api.get('/perfil');
 
@@ -49,7 +53,7 @@ function Perfil() {
             setNome(resposta.usuario.nome || '');
             setEmail(resposta.usuario.email || '');
         } catch (error) {
-            notificar('erro', error.message);
+            setErroCarregamento(error.message || 'Não foi possível carregar seu perfil.');
         } finally {
             setCarregando(false);
         }
@@ -65,7 +69,6 @@ function Perfil() {
                 URL.revokeObjectURL(preview);
             }
 
-            window.clearTimeout(notificar.timeout);
         };
     }, [preview]);
 
@@ -91,6 +94,22 @@ function Perfil() {
         return dataFormatada.toLocaleDateString('pt-BR');
     }
 
+    function avisarFormularioInvalido(event) {
+        event.preventDefault();
+
+        if (invalidToastRef.current) return;
+
+        invalidToastRef.current = true;
+        const mensagem = event.target.validity.valueMissing
+            ? 'Preencha todos os campos obrigatórios.'
+            : 'Verifique os dados informados.';
+
+        mostrarToast(mensagem, 'warning');
+        window.setTimeout(() => {
+            invalidToastRef.current = false;
+        }, 1000);
+    }
+
     const avatar = preview || perfil?.avatar_url || usuario?.avatar_url;
 
     const cargo = {
@@ -103,7 +122,7 @@ function Perfil() {
         event.preventDefault();
 
         if (nome.trim().length < 3) {
-            notificar('erro', 'O nome deve ter pelo menos 3 caracteres.');
+            notificar('aviso', 'O nome deve ter pelo menos 3 caracteres.');
             return;
         }
 
@@ -118,7 +137,7 @@ function Perfil() {
             setPerfil(resposta.usuario);
             atualizarUsuario(resposta.usuario);
 
-            notificar('sucesso', resposta.mensagem);
+            notificar('sucesso', resposta.mensagem || 'Perfil atualizado com sucesso!');
         } catch (error) {
             notificar('erro', error.message);
         } finally {
@@ -132,13 +151,13 @@ function Perfil() {
         if (!arquivo) return;
 
         if (!arquivo.type.startsWith('image/')) {
-            notificar('erro', 'Selecione um arquivo de imagem válido.');
+            notificar('aviso', 'Selecione um arquivo de imagem válido.');
             event.target.value = '';
             return;
         }
 
         if (arquivo.size > 5 * 1024 * 1024) {
-            notificar('erro', 'A imagem deve ter no máximo 5 MB.');
+            notificar('aviso', 'A imagem deve ter no máximo 5 MB.');
             event.target.value = '';
             return;
         }
@@ -176,7 +195,7 @@ function Perfil() {
 
             setPreview(null);
 
-            notificar('sucesso', resposta.mensagem);
+            notificar('sucesso', resposta.mensagem || 'Foto de perfil atualizada com sucesso!');
         } catch (error) {
             setPreview(null);
             notificar('erro', error.message);
@@ -206,7 +225,7 @@ function Perfil() {
 
             setPreview(null);
 
-            notificar('sucesso', resposta.mensagem);
+            notificar('sucesso', resposta.mensagem || 'Foto de perfil removida com sucesso!');
         } catch (error) {
             notificar('erro', error.message);
         } finally {
@@ -218,12 +237,12 @@ function Perfil() {
         event.preventDefault();
 
         if (novaSenha.length < 8) {
-            notificar('erro', 'A nova senha precisa ter pelo menos 8 caracteres.');
+            notificar('aviso', 'A nova senha precisa ter pelo menos 8 caracteres.');
             return;
         }
 
         if (novaSenha !== confirmarSenha) {
-            notificar('erro', 'As senhas não correspondem.');
+            notificar('aviso', 'As senhas não correspondem.');
             return;
         }
 
@@ -240,7 +259,7 @@ function Perfil() {
             setNovaSenha('');
             setConfirmarSenha('');
 
-            notificar('sucesso', resposta.mensagem);
+            notificar('sucesso', resposta.mensagem || 'Senha atualizada com sucesso!');
         } catch (error) {
             notificar('erro', error.message);
         } finally {
@@ -262,6 +281,7 @@ function Perfil() {
             <div className="perfil-error">
                 <i className="bi bi-exclamation-circle"></i>
                 <h3>Não foi possível carregar seu perfil</h3>
+                <p>{erroCarregamento}</p>
                 <button onClick={carregarPerfil}>Tentar novamente</button>
             </div>
         );
@@ -269,26 +289,6 @@ function Perfil() {
 
     return (
         <section className="perfil-page">
-            {mensagem && (
-                <div className={`perfil-toast ${mensagem.tipo}`}>
-                    <i className={`bi ${
-                        mensagem.tipo === 'sucesso'
-                            ? 'bi-check-circle-fill'
-                            : 'bi-exclamation-circle-fill'
-                    }`}></i>
-
-                    <span>{mensagem.texto}</span>
-
-                    <button
-                        type="button"
-                        onClick={() => setMensagem(null)}
-                        aria-label="Fechar mensagem"
-                    >
-                        <i className="bi bi-x-lg"></i>
-                    </button>
-                </div>
-            )}
-
             <header className="perfil-header">
                 <div>
                     <span className="perfil-eyebrow">CONTA</span>
@@ -379,7 +379,11 @@ function Perfil() {
                 </aside>
 
                 <div className="perfil-content">
-                    <form className="perfil-card" onSubmit={salvarPerfil}>
+                    <form
+                        className="perfil-card"
+                        onSubmit={salvarPerfil}
+                        onInvalidCapture={avisarFormularioInvalido}
+                    >
                         <div className="perfil-card-header">
                             <div className="perfil-card-icon">
                                 <i className="bi bi-person"></i>
@@ -441,7 +445,11 @@ function Perfil() {
                         </div>
                     </form>
 
-                    <form className="perfil-card" onSubmit={salvarSenha}>
+                    <form
+                        className="perfil-card"
+                        onSubmit={salvarSenha}
+                        onInvalidCapture={avisarFormularioInvalido}
+                    >
                         <div className="perfil-card-header">
                             <div className="perfil-card-icon">
                                 <i className="bi bi-lock"></i>

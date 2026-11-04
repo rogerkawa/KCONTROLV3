@@ -1,10 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import './Setores.css';
 
 function Setores() {
     const { usuario } = useAuth();
+    const { mostrarToast } = useToast();
+    const invalidToastRef = useRef(false);
     const isAdmin = usuario?.role?.toLowerCase() === 'admin';
 
     const [setores, setSetores] = useState([]);
@@ -20,20 +23,6 @@ function Setores() {
 
     const [setorExcluir, setSetorExcluir] = useState(null);
     const [excluindo, setExcluindo] = useState(false);
-
-    const [toast, setToast] = useState(null);
-
-    const mostrarToast = (mensagem, tipo = 'sucesso') => {
-        setToast({ mensagem, tipo });
-    };
-
-    useEffect(() => {
-        if (!toast) return;
-
-        const timer = setTimeout(() => setToast(null), 3500);
-
-        return () => clearTimeout(timer);
-    }, [toast]);
 
     const carregarSetores = useCallback(async (silencioso = false) => {
         try {
@@ -82,13 +71,25 @@ function Setores() {
         setNome('');
     };
 
+    const avisarFormularioInvalido = event => {
+        event.preventDefault();
+
+        if (invalidToastRef.current) return;
+
+        invalidToastRef.current = true;
+        mostrarToast('Informe o nome do setor.', 'warning');
+        window.setTimeout(() => {
+            invalidToastRef.current = false;
+        }, 1000);
+    };
+
     const salvarSetor = async event => {
         event.preventDefault();
 
         const nomeFormatado = nome.trim();
 
         if (!nomeFormatado) {
-            mostrarToast('Informe o nome do setor.', 'erro');
+            mostrarToast('Informe o nome do setor.', 'warning');
             return;
         }
 
@@ -100,13 +101,13 @@ function Setores() {
                     nome: nomeFormatado
                 });
 
-                mostrarToast('Setor cadastrado com sucesso!');
+                mostrarToast('Setor cadastrado com sucesso!', 'success');
             } else {
                 await api.put(`/setores/${modal.setor.id_setor}`, {
                     nome: nomeFormatado
                 });
 
-                mostrarToast('Setor atualizado com sucesso!');
+                mostrarToast('Setor atualizado com sucesso!', 'success');
             }
 
             setModal(null);
@@ -116,7 +117,7 @@ function Setores() {
         } catch (error) {
             mostrarToast(
                 error.message || 'Não foi possível salvar o setor.',
-                'erro'
+                'error'
             );
         } finally {
             setSalvando(false);
@@ -131,14 +132,14 @@ function Setores() {
 
             await api.delete(`/setores/${setorExcluir.id_setor}`);
 
-            mostrarToast('Setor excluído com sucesso!');
+            mostrarToast('Setor excluído com sucesso!', 'success');
             setSetorExcluir(null);
 
             await carregarSetores(true);
         } catch (error) {
             mostrarToast(
                 error.message || 'Não foi possível excluir o setor.',
-                'erro'
+                'error'
             );
         } finally {
             setExcluindo(false);
@@ -376,7 +377,11 @@ function Setores() {
                         }
                     }}
                 >
-                    <form className="setores-modal" onSubmit={salvarSetor}>
+                    <form
+                        className="setores-modal"
+                        onSubmit={salvarSetor}
+                        onInvalidCapture={avisarFormularioInvalido}
+                    >
                         <div className="setores-modal-header">
                             <div>
                                 <span className="setores-modal-eyebrow">
@@ -503,28 +508,6 @@ function Setores() {
                 </div>
             )}
 
-            {/* Toast */}
-            {toast && (
-                <div className={`setores-toast ${toast.tipo}`}>
-                    <i
-                        className={`bi ${
-                            toast.tipo === 'sucesso'
-                                ? 'bi-check-circle-fill'
-                                : 'bi-exclamation-circle-fill'
-                        }`}
-                    ></i>
-
-                    <span>{toast.mensagem}</span>
-
-                    <button
-                        type="button"
-                        onClick={() => setToast(null)}
-                        aria-label="Fechar aviso"
-                    >
-                        <i className="bi bi-x"></i>
-                    </button>
-                </div>
-            )}
         </section>
     );
 }

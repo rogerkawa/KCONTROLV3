@@ -1,7 +1,8 @@
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../services/api';
+import { useToast } from '../../context/ToastContext';
 import './SolicitarAcesso.css';
 
 const estadoInicial = {
@@ -45,9 +46,10 @@ function formatarTelefone(valor) {
 }
 
 export default function SolicitarAcesso() {
+    const { mostrarToast } = useToast();
+    const invalidToastRef = useRef(false);
     const [formulario, setFormulario] = useState(estadoInicial);
     const [carregando, setCarregando] = useState(false);
-    const [erro, setErro] = useState('');
     const [sucesso, setSucesso] = useState(false);
 
     function atualizarCampo(event) {
@@ -67,8 +69,6 @@ export default function SolicitarAcesso() {
             ...atual,
             [name]: novoValor
         }));
-
-        if (erro) setErro('');
     }
 
     function validarFormulario() {
@@ -104,12 +104,11 @@ export default function SolicitarAcesso() {
         const mensagemErro = validarFormulario();
 
         if (mensagemErro) {
-            setErro(mensagemErro);
+            mostrarToast(mensagemErro, 'warning');
             return;
         }
 
         setCarregando(true);
-        setErro('');
 
         try {
             const dados = {
@@ -123,11 +122,12 @@ export default function SolicitarAcesso() {
 
             await api.post('/solicitacoes', dados);
 
+            mostrarToast('Solicitação de acesso enviada com sucesso!', 'success');
             setSucesso(true);
             setFormulario(estadoInicial);
 
         } catch (error) {
-            setErro(error.message || 'Não foi possível enviar sua solicitação.');
+            mostrarToast(error.message || 'Não foi possível enviar sua solicitação.', 'error');
         } finally {
             setCarregando(false);
         }
@@ -135,8 +135,23 @@ export default function SolicitarAcesso() {
 
     function novaSolicitacao() {
         setSucesso(false);
-        setErro('');
         setFormulario(estadoInicial);
+    }
+
+    function avisarFormularioInvalido(event) {
+        event.preventDefault();
+
+        if (invalidToastRef.current) return;
+
+        invalidToastRef.current = true;
+        const mensagem = event.target.validity.valueMissing
+            ? 'Preencha todos os campos obrigatórios.'
+            : 'Verifique os dados informados.';
+
+        mostrarToast(mensagem, 'warning');
+        window.setTimeout(() => {
+            invalidToastRef.current = false;
+        }, 1000);
     }
 
     return (
@@ -218,6 +233,7 @@ export default function SolicitarAcesso() {
                             <form
                                 className="solicitacao-form"
                                 onSubmit={enviarSolicitacao}
+                                onInvalidCapture={avisarFormularioInvalido}
                             >
                                 <div className="solicitacao-form-section">
                                     <div className="solicitacao-section-title">
@@ -355,13 +371,6 @@ export default function SolicitarAcesso() {
                                         </div>
                                     </div>
                                 </div>
-
-                                {erro && (
-                                    <div className="solicitacao-erro" role="alert">
-                                        <i className="bi bi-exclamation-circle"></i>
-                                        {erro}
-                                    </div>
-                                )}
 
                                 <div className="solicitacao-submit-area">
                                     <p>

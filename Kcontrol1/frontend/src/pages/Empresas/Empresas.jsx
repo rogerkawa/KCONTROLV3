@@ -1,6 +1,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import api from '../../services/api';
+import { useToast } from '../../context/ToastContext';
 import './Empresas.css';
 
 const filtros = [
@@ -38,6 +39,7 @@ function formatarNumero(valor) {
 }
 
 function Empresas() {
+    const { mostrarToast } = useToast();
     const [empresas, setEmpresas] = useState([]);
     const [carregando, setCarregando] = useState(true);
     const [erro, setErro] = useState('');
@@ -52,7 +54,6 @@ function Empresas() {
     const [novoStatus, setNovoStatus] = useState('');
     const [atualizandoStatus, setAtualizandoStatus] = useState(false);
 
-    const [mensagem, setMensagem] = useState('');
     const [erroAcao, setErroAcao] = useState('');
 
     async function carregarEmpresas() {
@@ -129,15 +130,12 @@ function Empresas() {
 
         setAtualizandoStatus(true);
         setErroAcao('');
-        setMensagem('');
 
         try {
             await api.patch(
                 `/empresas/${empresaAcao.id_empresa}/status`,
                 { status: novoStatus }
             );
-
-            const statusAnterior = empresaAcao.status;
 
             setEmpresas(lista =>
                 lista.map(empresa =>
@@ -155,14 +153,17 @@ function Empresas() {
                 );
             }
 
-            setMensagem(
-                `Status alterado de ${statusAnterior} para ${novoStatus}.`
+            mostrarToast(
+                novoStatus === 'ativa'
+                    ? 'Empresa ativada com sucesso!'
+                    : 'Empresa suspensa com sucesso!',
+                'success'
             );
 
             setEmpresaAcao(null);
 
         } catch (error) {
-            setErroAcao(error.message || 'Não foi possível alterar o status.');
+            mostrarToast(error.message || 'Não foi possível alterar o status da empresa.', 'error');
         } finally {
             setAtualizandoStatus(false);
         }
@@ -224,16 +225,6 @@ function Empresas() {
                     <span>Atualizar</span>
                 </button>
             </header>
-
-            {mensagem && (
-                <div className="empresas-alert sucesso">
-                    <i className="bi bi-check-circle"></i>
-                    {mensagem}
-                    <button onClick={() => setMensagem('')}>
-                        <i className="bi bi-x"></i>
-                    </button>
-                </div>
-            )}
 
             <div className="empresas-stats">
 

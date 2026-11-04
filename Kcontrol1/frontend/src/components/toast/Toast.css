@@ -1,0 +1,125 @@
+
+.toast-container {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 99999;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+
+    width: min(420px, calc(100% - 32px));
+    pointer-events: none;
+}
+
+.toast {
+    --toast-color: #22c55e;
+
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 13px;
+
+    padding: 15px 16px;
+
+    background: var(--toast-bg, #17191d);
+    border: 1px solid var(--toast-border, #30343b);
+    border-radius: 13px;
+
+    color: var(--toast-text, #fff);
+
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.22);
+
+    pointer-events: auto;
+
+    animation: toastEnter .35s cubic-bezier(.2, .8, .2, 1);
+}
+
+.toast-success {
+    --toast-color: #22c55e;
+}
+
+.toast-error {
+    --toast-color: #ef4444;
+}
+
+.toast-warning {
+    --toast-color: #eab308;
+}
+
+.toast-info {
+    --toast-color: #3b82f6;
+}
+
+.toast-icon {
+    color: var(--toast-color);
+    display: flex;
+    flex-shrink: 0;
+}
+
+.toast-content {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+    min-width: 0;
+}
+
+.toast-content strong {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.toast-content span {
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--toast-muted, #a1a1aa);
+    overflow-wrap: anywhere;
+}
+
+.toast-close {
+    border: none;
+    background: transparent;
+    color: var(--toast-muted, #a1a1aa);
+    cursor: pointer;
+    display: flex;
+    padding: 5px;
+    border-radius: 6px;
+    transition: .2s;
+}
+
+.toast-close:hover {
+    color: var(--toast-text, #fff);
+    background: rgba(128, 128, 128, .15);
+}
+
+@keyframes toastEnter {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(.97);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@media (max-width: 480px) {
+    .toast-container {
+        bottom: 16px;
+    }
+
+    .toast {
+        padding: 13px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .toast {
+        animation: none;
+    }
+}

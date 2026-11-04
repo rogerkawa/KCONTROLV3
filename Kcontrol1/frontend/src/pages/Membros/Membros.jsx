@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import './Membros.css';
 
 const cargoInfo = {
@@ -16,6 +18,8 @@ const cargoInfo = {
 
 function Membros() {
     const { usuario } = useAuth();
+    const { mostrarToast } = useToast();
+    const invalidToastRef = useRef(false);
     const isAdmin = usuario?.role?.toLowerCase() === 'admin';
 
     const [membros, setMembros] = useState([]);
@@ -39,19 +43,6 @@ function Membros() {
     const [alterandoStatus, setAlterandoStatus] = useState(false);
 
     const [membroSelecionado, setMembroSelecionado] = useState(null);
-    const [toast, setToast] = useState(null);
-
-    const mostrarToast = (mensagem, tipo = 'sucesso') => {
-        setToast({ mensagem, tipo });
-    };
-
-    useEffect(() => {
-        if (!toast) return;
-
-        const timer = setTimeout(() => setToast(null), 3500);
-        return () => clearTimeout(timer);
-    }, [toast]);
-
     const carregarMembros = useCallback(async (silencioso = false) => {
         try {
             if (silencioso) {
@@ -147,6 +138,22 @@ function Membros() {
         setSenha('');
     };
 
+    const avisarFormularioInvalido = event => {
+        event.preventDefault();
+
+        if (invalidToastRef.current) return;
+
+        invalidToastRef.current = true;
+        const mensagem = event.target.validity.valueMissing
+            ? 'Preencha todos os campos obrigatórios.'
+            : 'Verifique os dados informados.';
+
+        mostrarToast(mensagem, 'warning');
+        window.setTimeout(() => {
+            invalidToastRef.current = false;
+        }, 1000);
+    };
+
     const salvarMembro = async event => {
         event.preventDefault();
 
@@ -154,12 +161,12 @@ function Membros() {
         const emailFormatado = email.trim();
 
         if (!nomeFormatado || !emailFormatado) {
-            mostrarToast('Preencha todos os campos obrigatórios.', 'erro');
+            mostrarToast('Preencha todos os campos obrigatórios.', 'warning');
             return;
         }
 
         if (modal.tipo === 'criar' && senha.length < 6) {
-            mostrarToast('A senha deve possuir pelo menos 6 caracteres.', 'erro');
+            mostrarToast('A senha deve possuir pelo menos 6 caracteres.', 'warning');
             return;
         }
 
@@ -174,7 +181,7 @@ function Membros() {
                     role: cargo
                 });
 
-                mostrarToast('Membro cadastrado com sucesso!');
+                mostrarToast('Membro cadastrado com sucesso!', 'success');
             } else {
                 await api.put(`/usuarios/${modal.membro.id_usuario}`, {
                     nome: nomeFormatado,
@@ -182,7 +189,7 @@ function Membros() {
                     role: cargo
                 });
 
-                mostrarToast('Membro atualizado com sucesso!');
+                mostrarToast('Membro atualizado com sucesso!', 'success');
             }
 
             setModal(null);
@@ -192,7 +199,7 @@ function Membros() {
 
             await carregarMembros(true);
         } catch (error) {
-            mostrarToast(error.message || 'Não foi possível salvar o membro.', 'erro');
+            mostrarToast(error.message || 'Não foi possível salvar o membro.', 'error');
         } finally {
             setSalvando(false);
         }
@@ -213,7 +220,8 @@ function Membros() {
             mostrarToast(
                 novoStatus === 'ativo'
                     ? 'Membro ativado com sucesso!'
-                    : 'Membro desativado com sucesso!'
+                    : 'Membro desativado com sucesso!',
+                'success'
             );
 
             setMembroStatus(null);
@@ -221,7 +229,7 @@ function Membros() {
 
             await carregarMembros(true);
         } catch (error) {
-            mostrarToast(error.message || 'Não foi possível alterar o status.', 'erro');
+            mostrarToast(error.message || 'Não foi possível alterar o status.', 'error');
         } finally {
             setAlterandoStatus(false);
         }
@@ -535,14 +543,18 @@ function Membros() {
             </div>
 
             {/* Modal de cadastro e edição */}
-            {modal && (
+            {modal && createPortal(
                 <div
                     className="membros-modal-overlay"
                     onMouseDown={event => {
                         if (event.target === event.currentTarget) fecharModal();
                     }}
                 >
-                    <form className="membros-modal" onSubmit={salvarMembro}>
+                    <form
+                        className="membros-modal"
+                        onSubmit={salvarMembro}
+                        onInvalidCapture={avisarFormularioInvalido}
+                    >
                         <div className="membros-modal-header">
                             <div>
                                 <span className="membros-modal-eyebrow">
@@ -668,11 +680,12 @@ function Membros() {
                             </button>
                         </div>
                     </form>
-                </div>
+                </div>,
+                document.body
             )}
 
             {/* Detalhes do membro */}
-            {membroSelecionado && (
+            {membroSelecionado && createPortal(
                 <div
                     className="membros-modal-overlay"
                     onMouseDown={event => {
@@ -760,11 +773,12 @@ function Membros() {
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
             {/* Confirmação de ativação/desativação */}
-            {membroStatus && (
+            {membroStatus && createPortal(
                 <div className="membros-modal-overlay">
                     <div className="membros-modal membros-confirm-modal">
                         <div className={`membros-confirm-icon ${membroStatus.status === 'ativo' ? 'warning' : 'success'}`}>
@@ -805,28 +819,10 @@ function Membros() {
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
-            {/* Toast */}
-            {toast && (
-                <div className={`membros-toast ${toast.tipo}`}>
-                    <i className={`bi ${toast.tipo === 'sucesso'
-                        ? 'bi-check-circle-fill'
-                        : 'bi-exclamation-circle-fill'}`}
-                    ></i>
-
-                    <span>{toast.mensagem}</span>
-
-                    <button
-                        type="button"
-                        onClick={() => setToast(null)}
-                        aria-label="Fechar aviso"
-                    >
-                        <i className="bi bi-x"></i>
-                    </button>
-                </div>
-            )}
         </section>
     );
 }
