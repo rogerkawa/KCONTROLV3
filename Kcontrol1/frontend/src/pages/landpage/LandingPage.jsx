@@ -732,7 +732,7 @@ ScrollTrigger.refresh();
           </p>
         </div>
         <div className="team-grid">
-          <a href="https://github.com/rogerkawa">
+          <a href="https://github.com/rogerkawa" target="_blank">
             <article className="team-card" data-reveal>
               <div className="team-photo-wrap">
                 <img
@@ -751,7 +751,7 @@ ScrollTrigger.refresh();
               </div>
             </article>
           </a>
-          <a href="https://github.com/caiovictordev">
+          <a href="https://github.com/caiovictordev" target="_blank">
             <article className="team-card" data-reveal>
               <div className="team-photo-wrap">
                 <img
