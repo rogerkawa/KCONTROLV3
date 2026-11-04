@@ -92,71 +92,75 @@ const registroModel = {
         return registros[0];
     },
 
-    
-async criar(dados) {
-    const conexao = await conect.getConnection();
 
-    try {
-        await conexao.beginTransaction();
+    async criar(dados) {
+        const conexao = await conect.getConnection();
 
-        // Verifica se o setor pertence à empresa.
-        const [setores] = await conexao.execute(
-            `SELECT id_setor
+        try {
+            await conexao.beginTransaction();
+
+            // Verifica se o setor pertence à empresa.
+            const [setores] = await conexao.execute(
+                `SELECT id_setor
             FROM setores
             WHERE id_setor = ?
             AND id_empresa = ?
             LIMIT 1`,
-            [dados.id_setor, dados.id_empresa]
-        );
+                [dados.id_setor, dados.id_empresa]
+            );
 
-        if (!setores.length) {
-            throw new Error('SETOR_NAO_ENCONTRADO');
-        }
+            if (!setores.length) {
+                throw new Error('SETOR_NAO_ENCONTRADO');
+            }
 
-        // Bloqueia a sala durante a operação.
-        const [salas] = await conexao.execute(
-            `SELECT id_sala, status
+            // Bloqueia a sala durante a operação.
+            const [salas] = await conexao.execute(
+                `SELECT id_sala, status
             FROM sala
             WHERE id_sala = ?
             AND id_empresa = ?
             LIMIT 1
             FOR UPDATE`,
-            [dados.id_sala, dados.id_empresa]
-        );
+                [dados.id_sala, dados.id_empresa]
+            );
 
-        if (!salas.length) {
-            throw new Error('SALA_NAO_ENCONTRADA');
-        }
+            if (!salas.length) {
+                throw new Error('SALA_NAO_ENCONTRADA');
+            }
 
-        // A sala só pode ser usada se estiver administrativamente disponível.
-        if (salas[0].status !== 'disponivel') {
-            throw new Error('SALA_INDISPONIVEL');
-        }
+            // A sala só pode ser usada se estiver administrativamente disponível.
+            if (salas[0].status !== 'disponivel') {
+                throw new Error('SALA_INDISPONIVEL');
+            }
 
-        // Verifica se já existe um registro ativo
-        // para a mesma sala e o mesmo turno.
-        const [registrosAtivos] = await conexao.execute(
-            `SELECT id_registro
-            FROM registros
-            WHERE id_sala = ?
-            AND id_empresa = ?
-            AND turno = ?
-            AND status = 'retirada'
-            LIMIT 1`,
-            [
-                dados.id_sala,
-                dados.id_empresa,
-                dados.turno
-            ]
-        );
+            // Verifica se já existe um registro ativo
+            // para a mesma sala e o mesmo turno.
+            // Verifica se já existe um registro ativo
+            // para a mesma sala, data e turno.
+            const [registrosAtivos] = await conexao.execute(
+                `SELECT id_registro
+                    FROM registros
+                    WHERE id_sala = ?
+                    AND id_empresa = ?
+                    AND turno = ?
+                    AND DATE(data_retirada) = ?
+                    AND status = 'retirada'
+                    LIMIT 1`,
+                [
+                    dados.id_sala,
+                    dados.id_empresa,
+                    dados.turno,
+                    dados.data_retirada
+                ]
+            );
 
-        if (registrosAtivos.length) {
-            throw new Error('RETIRADA_JA_EXISTE');
-        }
+            if (registrosAtivos.length) {
+                throw new Error('RETIRADA_JA_EXISTE');
+            }
 
-        // Cria o agendamento.
-        const [resultado] = await conexao.execute(
-            `INSERT INTO registros (
+            // Cria o agendamento.
+            const [resultado] = await conexao.execute(
+                `INSERT INTO registros (
                 id_empresa,
                 id_usuario,
                 id_setor,
@@ -167,90 +171,90 @@ async criar(dados) {
                 hora_retirada,
                 status
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'retirada')`,
-            [
-                dados.id_empresa,
-                dados.id_usuario,
-                dados.id_setor,
-                dados.id_sala,
-                dados.responsavel,
-                dados.turno,
-                dados.data_retirada,
-                dados.hora_retirada
-            ]
-        );
+                [
+                    dados.id_empresa,
+                    dados.id_usuario,
+                    dados.id_setor,
+                    dados.id_sala,
+                    dados.responsavel,
+                    dados.turno,
+                    dados.data_retirada,
+                    dados.hora_retirada
+                ]
+            );
 
-        // IMPORTANTE:
-        // Não alteramos o status da sala.
-        // A ocupação é controlada pelos registros e seus turnos.
+            // IMPORTANTE:
+            // Não alteramos o status da sala.
+            // A ocupação é controlada pelos registros e seus turnos.
 
-        await conexao.commit();
+            await conexao.commit();
 
-        return resultado.insertId;
+            return resultado.insertId;
 
-    } catch (error) {
-        await conexao.rollback();
-        throw error;
+        } catch (error) {
+            await conexao.rollback();
+            throw error;
 
-    } finally {
-        conexao.release();
-    }
-},
+        } finally {
+            conexao.release();
+        }
+    },
 
 
-    
 
-async devolver(id_registro, id_empresa) {
-    const conexao = await conect.getConnection();
 
-    try {
-        await conexao.beginTransaction();
+    async devolver(id_registro, id_empresa) {
+        const conexao = await conect.getConnection();
 
-        // Busca o registro e bloqueia a linha.
-        const [registros] = await conexao.execute(
-            `SELECT id_registro, id_sala, status
+        try {
+            await conexao.beginTransaction();
+
+            // Busca o registro e bloqueia a linha.
+            const [registros] = await conexao.execute(
+                `SELECT id_registro, id_sala, status
             FROM registros
             WHERE id_registro = ?
             AND id_empresa = ?
             LIMIT 1
             FOR UPDATE`,
-            [id_registro, id_empresa]
-        );
+                [id_registro, id_empresa]
+            );
 
-        if (!registros.length) {
-            throw new Error('REGISTRO_NAO_ENCONTRADO');
-        }
+            if (!registros.length) {
+                throw new Error('REGISTRO_NAO_ENCONTRADO');
+            }
 
-        const registro = registros[0];
+            const registro = registros[0];
 
-        if (registro.status === 'devolvida') {
-            throw new Error('REGISTRO_JA_DEVOLVIDO');
-        }
+            if (registro.status === 'devolvida') {
+                throw new Error('REGISTRO_JA_DEVOLVIDO');
+            }
 
-        // Finaliza somente o registro.
-        await conexao.execute(
-            `UPDATE registros
+            // Finaliza somente o registro.
+            await conexao.execute(
+                `UPDATE registros
             SET status = 'devolvida',
                 hora_entrega = CURRENT_TIME()
             WHERE id_registro = ?
             AND id_empresa = ?`,
-            [id_registro, id_empresa]
-        );
+                [id_registro, id_empresa]
+            );
 
-        // Não alteramos sala.status.
-        // A sala continua disponível para outros turnos.
+            // Não alteramos sala.status.
+            // A sala continua disponível para outros turnos.
 
-        await conexao.commit();
+            await conexao.commit();
 
-        return true;
+            return true;
 
-    } catch (error) {
-        await conexao.rollback();
-        throw error;
+        } catch (error) {
+            await conexao.rollback();
+            throw error;
 
-    } finally {
-        conexao.release();
+        } finally {
+            conexao.release();
+        }
     }
-}
 
 
 };

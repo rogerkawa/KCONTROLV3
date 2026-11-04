@@ -118,7 +118,7 @@ const registroController = {
         !/^\d{4}-\d{2}-\d{2}$/.test(data_retirada) ||
         Number.isNaN(Date.parse(`${data_retirada}T00:00:00Z`)) ||
         new Date(`${data_retirada}T00:00:00Z`).toISOString().slice(0, 10) !==
-          data_retirada
+        data_retirada
       ) {
         return res.status(400).json({
           mensagem: "Informe uma data válida no formato AAAA-MM-DD.",
@@ -167,7 +167,7 @@ const registroController = {
         ],
         RETIRADA_JA_EXISTE: [
           409,
-          "Já existe uma retirada ativa para esta sala e turno.",
+          "Já existe uma retirada ativa para esta sala, data e turno.",
         ],
       };
 
