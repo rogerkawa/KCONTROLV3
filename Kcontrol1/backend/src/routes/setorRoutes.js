@@ -18,7 +18,7 @@ router.get('/:id', setorController.buscarPorId);
 // Gerenciamento: somente admin
 router.post('/', roleMiddleware('admin'), setorController.criar);
 router.put('/:id', roleMiddleware('admin'), setorController.atualizar);
-router.patch('/:id/status', roleMiddleware,  setorController.alterarStatus);
+router.patch('/:id/status', roleMiddleware('admin'),  setorController.alterarStatus);
 router.delete('/:id', roleMiddleware('admin'), setorController.excluir);
 
 
