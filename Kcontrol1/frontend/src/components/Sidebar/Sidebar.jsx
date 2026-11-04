@@ -4,7 +4,6 @@ import "./Sidebar.css";
 
 const menus = {
   superadmin: [
-    { label: "Dashboard", icon: "bi-grid-1x2", path: "/dashboard" },
     { label: "Empresas", icon: "bi-buildings", path: "/empresas" },
     { label: "Solicitações", icon: "bi-inbox", path: "/solicitacoes" },
     { label: "Auditoria", icon: "bi-journal-text", path: "/auditoria" },

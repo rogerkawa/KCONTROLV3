@@ -22,17 +22,6 @@ import LandingPage from "./pages/landpage/LandingPage";
 import VerificarMFA from "./pages/mfa/VerificarMFA";
 import ConfigurarMFA from "./pages/mfa/ConfigurarMFA";
 
-function RedirecionarInicio() {
-  const { usuario } = useAuth();
-
-  const cargo = usuario?.role?.toLowerCase();
-
-  if (cargo === "user") {
-    return <Navigate to="/registros" replace />;
-  }
-
-  return <Navigate to="/dashboard" replace />;
-}
 
 function PublicRoute({ children }) {
   const { autenticado, carregando } = useAuth();
@@ -50,16 +39,36 @@ function PublicRoute({ children }) {
 }
 
 function DashboardAcesso() {
-  const { usuario } = useAuth();
+    const { usuario } = useAuth();
 
-  const cargo = usuario?.role?.toLowerCase();
+    const cargo = usuario?.role?.toLowerCase();
 
-  if (cargo === "user") {
-    return <Navigate to="/registros" replace />;
-  }
+    if (cargo === "user") {
+        return <Navigate to="/registros" replace />;
+    }
 
-  return <Dashboard />;
+    if (cargo === "superadmin") {
+        return <Navigate to="/empresas" replace />;
+    }
+
+    return <Dashboard />;
 }
+function RotaSuperAdmin({ children }) {
+    const { usuario } = useAuth();
+
+    const cargo = usuario?.role?.toLowerCase();
+
+    if (cargo !== "superadmin") {
+        return (
+            <Navigate
+                to={cargo === "user" ? "/registros" : "/dashboard"}
+                replace
+            />
+        );
+    }
+
+    return children;
+} 
 
 function PaginaEmConstrucao() {
   return (
@@ -78,19 +87,20 @@ function PaginaEmConstrucao() {
     </section>
   );
 }
-function RotaSuperAdmin({ children }) {
-  const { usuario } = useAuth();
+function RedirecionarInicio() {
+    const { usuario } = useAuth();
 
-  if (usuario?.role !== "superadmin") {
-    return (
-      <Navigate
-        to={usuario?.role === "user" ? "/registros" : "/dashboard"}
-        replace
-      />
-    );
-  }
+    const cargo = usuario?.role?.toLowerCase();
 
-  return children;
+    if (cargo === "user") {
+        return <Navigate to="/registros" replace />;
+    }
+
+    if (cargo === "superadmin") {
+        return <Navigate to="/empresas" replace />;
+    }
+
+    return <Navigate to="/dashboard" replace />;
 }
 
 function AppRoutes() {
