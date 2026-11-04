@@ -32,6 +32,7 @@ function Registros() {
     const [erro, setErro] = useState('');
     const [modalAberto, setModalAberto] = useState(false);
     const [registroSelecionado, setRegistroSelecionado] = useState(null);
+    const [registroParaDevolver, setRegistroParaDevolver] = useState(null);
 
     const [salvando, setSalvando] = useState(false);
     const [devolvendo, setDevolvendo] = useState(null);
@@ -43,6 +44,8 @@ function Registros() {
     const [filtroTurno, setFiltroTurno] = useState('todos');
     const [filtroSala, setFiltroSala] = useState('todos');
     const [filtroSetor, setFiltroSetor] = useState('todos');
+
+    
 
     const buscarDados = useCallback(async (silencioso = false) => {
         if (silencioso) {
@@ -262,31 +265,46 @@ function Registros() {
         }
     };
 
-    const registrarDevolucao = async (registro) => {
-        const confirmar = window.confirm(
-            `Deseja registrar a devolução da ${registro.nome_sala}?`
-        );
+    const abrirConfirmacaoDevolucao = (registro) => {
+    if (devolvendo) return;
 
-        if (!confirmar) return;
+    setRegistroParaDevolver(registro);
+};
 
-        setDevolvendo(registro.id_registro);
+const fecharConfirmacaoDevolucao = () => {
+    if (devolvendo) return;
 
-        try {
-            await api.patch(`/registros/${registro.id_registro}/devolver`);
+    setRegistroParaDevolver(null);
+};
 
-            if (registroSelecionado?.id_registro === registro.id_registro) {
-                setRegistroSelecionado(null);
-            }
+const registrarDevolucao = async () => {
+    if (!registroParaDevolver || devolvendo) return;
 
-            notificar('sucesso', 'Devolução registrada com sucesso!');
+    const registro = registroParaDevolver;
 
-            await buscarDados(true);
-        } catch (error) {
-            notificar('erro', error.message || 'Não foi possível registrar a devolução.');
-        } finally {
-            setDevolvendo(null);
+    setDevolvendo(registro.id_registro);
+
+    try {
+        await api.patch(`/registros/${registro.id_registro}/devolver`);
+
+        if (registroSelecionado?.id_registro === registro.id_registro) {
+            setRegistroSelecionado(null);
         }
-    };
+
+        setRegistroParaDevolver(null);
+
+        notificar('sucesso', 'Devolução registrada com sucesso!');
+
+        await buscarDados(true);
+    } catch (error) {
+        notificar(
+            'erro',
+            error.message || 'Não foi possível registrar a devolução.'
+        );
+    } finally {
+        setDevolvendo(null);
+    }
+};
 
     const limparFiltros = () => {
         setBusca('');
@@ -617,7 +635,7 @@ function Registros() {
                                                 {registro.status === 'retirada' && (
                                                     <button
                                                         className="registro-return-button"
-                                                        onClick={() => registrarDevolucao(registro)}
+                                                        onClick={() => abrirConfirmacaoDevolucao(registro)}
                                                         disabled={devolvendo === registro.id_registro}
                                                         title="Registrar devolução"
                                                     >
@@ -954,7 +972,7 @@ function Registros() {
                             {registroSelecionado.status === 'retirada' && (
                                 <button
                                     className="registros-primary-button"
-                                    onClick={() => registrarDevolucao(registroSelecionado)}
+                                    onClick={() => abrirConfirmacaoDevolucao(registroSelecionado)}
                                     disabled={devolvendo === registroSelecionado.id_registro}
                                 >
                                     <i className="bi bi-check2"></i>
@@ -965,6 +983,91 @@ function Registros() {
                     </section>
                 </div>
             )}
+            
+{/* Modal de confirmação de devolução */}
+{registroParaDevolver && (
+    <div
+        className="registros-modal-overlay"
+        onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+                fecharConfirmacaoDevolucao();
+            }
+        }}
+    >
+        <section
+            className="registros-modal registros-confirm-modal"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="confirm-devolucao-title"
+            aria-describedby="confirm-devolucao-description"
+        >
+            <div className="registros-confirm-content">
+
+                <div className="registros-confirm-icon">
+                    <i className="bi bi-arrow-return-left"></i>
+                </div>
+
+                <span className="registros-eyebrow">
+                    CONFIRMAÇÃO DE AÇÃO
+                </span>
+
+                <h2 id="confirm-devolucao-title">
+                    Confirmar devolução?
+                </h2>
+
+                <p id="confirm-devolucao-description">
+                    Você está prestes a registrar a devolução da sala
+                    <strong> {registroParaDevolver.nome_sala}</strong>.
+                    Deseja continuar?
+                </p>
+
+                <div className="registros-confirm-info">
+                    <div>
+                        <span>Sala</span>
+                        <strong>{registroParaDevolver.nome_sala}</strong>
+                    </div>
+
+                    <div>
+                        <span>Responsável</span>
+                        <strong>{registroParaDevolver.responsavel}</strong>
+                    </div>
+                </div>
+
+            </div>
+
+            <div className="registros-modal-footer">
+                <button
+                    type="button"
+                    className="registros-secondary-button"
+                    onClick={fecharConfirmacaoDevolucao}
+                    disabled={devolvendo !== null}
+                >
+                    Cancelar
+                </button>
+
+                <button
+                    type="button"
+                    className="registros-primary-button"
+                    onClick={registrarDevolucao}
+                    disabled={devolvendo !== null}
+                >
+                    {devolvendo === registroParaDevolver.id_registro ? (
+                        <>
+                            <i className="bi bi-arrow-repeat"></i>
+                            Processando...
+                        </>
+                    ) : (
+                        <>
+                            <i className="bi bi-check2"></i>
+                            Confirmar devolução
+                        </>
+                    )}
+                </button>
+            </div>
+        </section>
+    </div>
+)}
+
 
         </div>
     );

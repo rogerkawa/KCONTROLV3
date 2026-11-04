@@ -895,6 +895,90 @@
     grid-column: 1 / -1;
 }
 
+/* modal devolução */
+/* Modal de confirmação de devolução */
+
+.registros-confirm-modal {
+    max-width: 440px;
+    width: calc(100% - 32px);
+}
+
+.registros-confirm-content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.registros-confirm-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 22px;
+    background: var(--surface-secondary, rgba(128, 128, 128, 0.12));
+    color: var(--text-primary, currentColor);
+    font-size: 23px;
+}
+
+.registros-confirm-content h2 {
+    margin: 9px 0 8px;
+}
+
+.registros-confirm-content > p {
+    margin: 0;
+    line-height: 1.6;
+    color: var(--text-secondary, #888);
+    font-size: 14px;
+}
+
+.registros-confirm-content > p strong {
+    color: var(--text-primary, currentColor);
+    font-weight: 600;
+}
+
+.registros-confirm-info {
+    width: 100%;
+    margin-top: 22px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    border: 1px solid var(--border-color, rgba(128, 128, 128, 0.2));
+    border-radius: 12px;
+}
+
+.registros-confirm-info div {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.registros-confirm-info span {
+    font-size: 12px;
+    color: var(--text-secondary, #888);
+}
+
+.registros-confirm-info strong {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary, currentColor);
+}
+
+.registros-confirm-modal .registros-modal-footer {
+    margin-top: 24px;
+}
+
+.registros-confirm-modal .registros-modal-footer button {
+    flex: 1;
+}
+
+.registros-confirm-modal button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 /* Loading e erro */
 
 .registros-loading,
