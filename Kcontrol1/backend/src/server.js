@@ -8,6 +8,7 @@ import conect from './config/database.js';
 import routes from './routes/index.js';
 
 const app = express();
+app.set('trust proxy', 1);
 
 const origensPermitidas = process.env.FRONTEND_URL
     ? process.env.FRONTEND_URL.split(',').map(url => url.trim())
