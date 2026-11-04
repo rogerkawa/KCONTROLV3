@@ -58,7 +58,14 @@ function Sidebar({ collapsed = false }) {
       {/* MARCA */}
       <div className="sidebar-brand">
         <div className="sidebar-logo">
-          <img src="./images/logokcontrol.png" alt="Logo KControl" />
+          <img
+            src={
+              document.documentElement.getAttribute('data-theme') === 'dark'
+                ? '/images/logo-branca.png'
+                : '/images/logo-preta.png'
+            }
+            alt="Logo KControl"
+          />
         </div>
 
         <div className="sidebar-brand-text">
@@ -83,8 +90,8 @@ function Sidebar({ collapsed = false }) {
                   "sidebar-link",
                   isActive && "active",
                   cargo !== "user" &&
-                    ["/perfil", "/configuracoes"].includes(item.path) &&
-                    "sidebar-mobile-hidden",
+                  ["/perfil", "/configuracoes"].includes(item.path) &&
+                  "sidebar-mobile-hidden",
                 ]
                   .filter(Boolean)
                   .join(" ")

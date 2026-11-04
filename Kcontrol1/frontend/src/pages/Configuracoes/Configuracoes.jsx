@@ -277,7 +277,14 @@ function Configuracoes() {
                     <div className="config-about-content">
                         <div className="config-about-brand">
                             <div className="config-about-logo">
-                                <img src="./images/logokcontrol.png" alt="Logo KControl" />
+                                <img
+                                    src={
+                                        document.documentElement.getAttribute('data-theme') === 'dark'
+                                            ? '/images/logo-branca.png'
+                                            : '/images/logo-preta.png'
+                                    }
+                                    alt="Logo KControl"
+                                />
                             </div>
 
                             <div>
