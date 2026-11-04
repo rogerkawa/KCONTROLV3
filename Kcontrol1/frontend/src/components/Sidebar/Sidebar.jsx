@@ -58,7 +58,7 @@ function Sidebar({ collapsed = false }) {
       {/* MARCA */}
       <div className="sidebar-brand">
         <div className="sidebar-logo">
-          <i className="bi bi-grid-1x2-fill"></i>
+          <img src="./images/logokcontrol.png" alt="Logo KControl" />
         </div>
 
         <div className="sidebar-brand-text">
