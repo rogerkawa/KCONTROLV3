@@ -277,7 +277,7 @@ function Configuracoes() {
                     <div className="config-about-content">
                         <div className="config-about-brand">
                             <div className="config-about-logo">
-                                <i className="bi bi-grid-1x2-fill"></i>
+                                <img src="./images/logokcontrol.png" alt="Logo KControl" />
                             </div>
 
                             <div>
