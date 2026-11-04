@@ -21,6 +21,18 @@ app.use(cors({
 
 app.use(express.json());
 app.use(cookieParser());
+app.use((req, res, next) => {
+    if (req.path.startsWith('/api')) {
+        console.log('--- REQUISIÇÃO RECEBIDA ---');
+        console.log('Método:', req.method);
+        console.log('Rota:', req.originalUrl);
+        console.log('Origem:', req.headers.origin);
+        console.log('Dispositivo:', req.headers['user-agent']);
+        console.log('Enviou cookie:', Boolean(req.headers.cookie));
+    }
+
+    next();
+});
 app.use('/api', apiLimiter);
 
 // Proteção CSRF por validação da origem
