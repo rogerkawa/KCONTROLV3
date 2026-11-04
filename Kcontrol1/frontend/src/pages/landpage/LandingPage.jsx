@@ -732,40 +732,44 @@ ScrollTrigger.refresh();
           </p>
         </div>
         <div className="team-grid">
-          <article className="team-card" data-reveal>
-            <div className="team-photo-wrap">
-              <img
-                src={fotoRoger}
-                alt="Retrato de Roger, desenvolvedor do KControl"
-                loading="lazy"
-              />
-              <span className="team-photo-index">01 / DESENVOLVIMENTO</span>
-            </div>
-            <div className="team-card-info">
-              <div>
-                <h3>Roger</h3>
-                <p>Desenvolvimento & produto</p>
+          <a href="https://github.com/rogerkawa">
+            <article className="team-card" data-reveal>
+              <div className="team-photo-wrap">
+                <img
+                  src={fotoRoger}
+                  alt="Retrato de Roger, desenvolvedor do KControl"
+                  loading="lazy"
+                />
+                <span className="team-photo-index">01 / DESENVOLVIMENTO</span>
               </div>
-              <i className="bi bi-arrow-up-right" />
-            </div>
-          </article>
-          <article className="team-card" data-reveal>
-            <div className="team-photo-wrap">
-              <img
-                src={fotoCaio}
-                alt="Retrato de Caio, desenvolvedor do KControl"
-                loading="lazy"
-              />
-              <span className="team-photo-index">02 / DESENVOLVIMENTO</span>
-            </div>
-            <div className="team-card-info">
-              <div>
-                <h3>Caio</h3>
-                <p>Desenvolvimento & produto</p>
+              <div className="team-card-info">
+                <div>
+                  <h3>Roger</h3>
+                  <p>Desenvolvimento & produto</p>
+                </div>
+                <i className="bi bi-arrow-up-right" />
               </div>
-              <i className="bi bi-arrow-up-right" />
-            </div>
-          </article>
+            </article>
+          </a>
+          <a href="https://github.com/caiovictordev">
+            <article className="team-card" data-reveal>
+              <div className="team-photo-wrap">
+                <img
+                  src={fotoCaio}
+                  alt="Retrato de Caio, desenvolvedor do KControl"
+                  loading="lazy"
+                />
+                <span className="team-photo-index">02 / DESENVOLVIMENTO</span>
+              </div>
+              <div className="team-card-info">
+                <div>
+                  <h3>Caio</h3>
+                  <p>Desenvolvimento & produto</p>
+                </div>
+                <i className="bi bi-arrow-up-right" />
+              </div>
+            </article>
+          </a>
           <div className="team-note">
             <span className="team-note-mark">“</span>
             <p>
