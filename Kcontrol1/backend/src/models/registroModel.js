@@ -101,7 +101,7 @@ const registroModel = {
 
             // Verifica se o setor pertence à empresa.
             const [setores] = await conexao.execute(
-                `SELECT id_setor
+                `SELECT id_setor, status
             FROM setores
             WHERE id_setor = ?
             AND id_empresa = ?
