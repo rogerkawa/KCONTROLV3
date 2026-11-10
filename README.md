@@ -59,7 +59,7 @@ Consulte as atividades realizadas e tenha mais rastreabilidade sobre as operaç�
 Tenha uma visão geral da operação com indicadores, atividades recentes e informações que ajudam a acompanhar a utilização dos ambientes.
 
 <div align="center">
-<img src="https://raw.githubusercontent.com/rogerkawa/KCONTROLV3/main/Kcontrol1/frontend/src/assets/landing/image%201.png" alt="Dashboard da plataforma KControl" width="90%">
+<img src="https://raw.githubusercontent.com/rogerkawa/KCONTROLV3/main/Kcontrol1/frontend/src/assets/landing/image%203.png" alt="Dashboard da plataforma KControl" width="90%">
 </div>
 
 ### 06. Estrutura multiempresa
