@@ -62,6 +62,39 @@ const registroModel = {
         return registros;
     },
 
+async listarHoje(id_empresa, dataHoje) {
+    const [registros] = await conect.execute(
+        `SELECT
+            r.id_registro,
+            r.id_usuario,
+            u.nome AS nome_usuario,
+            r.id_setor,
+            s.nome AS nome_setor,
+            r.id_sala,
+            sa.nome AS nome_sala,
+            r.responsavel,
+            r.turno,
+            r.data_retirada,
+            r.hora_retirada,
+            r.hora_entrega,
+            r.status,
+            r.created_at
+        FROM registros r
+        INNER JOIN usuarios u ON r.id_usuario = u.id_usuario
+        INNER JOIN setores s ON r.id_setor = s.id_setor
+        INNER JOIN sala sa ON r.id_sala = sa.id_sala
+        WHERE r.id_empresa = ?
+        AND r.data_retirada = ?
+        ORDER BY
+            FIELD(r.turno, 'M', 'T', 'N'),
+            r.hora_retirada ASC`,
+        [id_empresa, dataHoje]
+    );
+
+    return registros;
+},
+
+
     async buscarPorId(id_registro, id_empresa) {
         const [registros] = await conect.execute(
             `SELECT

@@ -24,10 +24,16 @@ router.get('/meus', registroController.listarMeus);
 // Admin e user: criar retirada
 router.post('/', registroController.criar);
 
+// Admin e user: registros de hoje de toda a empresa
+router.get('/hoje', registroController.listarHoje);
+
 // Admin e user: consultar registro (com validação de propriedade)
 router.get('/:id', registroController.buscarPorId);
 
 // Admin e user: devolver (com validação de propriedade)
 router.patch('/:id/devolver', registroController.devolver);
+
+
+
 
 export default router;

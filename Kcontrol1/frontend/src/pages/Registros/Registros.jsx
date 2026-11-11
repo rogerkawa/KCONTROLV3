@@ -44,6 +44,8 @@ function Registros() {
     const [filtroTurno, setFiltroTurno] = useState('todos');
     const [filtroSala, setFiltroSala] = useState('todos');
     const [filtroSetor, setFiltroSetor] = useState('todos');
+    const [visao, setVisao] = useState('hoje');
+
 
 
 
@@ -57,9 +59,19 @@ function Registros() {
         try {
             setErro('');
 
+            let endpointRegistros;
+
+            if (visao === 'hoje') {
+                endpointRegistros = '/registros/hoje';
+            } else if (isAdmin) {
+                endpointRegistros = '/registros';
+            } else {
+                endpointRegistros = '/registros/meus';
+            }
+
             const [respostaRegistros, respostaSalas, respostaSetores] =
                 await Promise.all([
-                    api.get(isAdmin ? '/registros' : '/registros/meus'),
+                    api.get(endpointRegistros),
                     api.get('/salas'),
                     api.get('/setores')
                 ]);
@@ -67,13 +79,15 @@ function Registros() {
             setRegistros(respostaRegistros.registros || []);
             setSalas(respostaSalas.salas || []);
             setSetores(respostaSetores.setores || []);
+
         } catch (error) {
             setErro(error.message || 'Não foi possível carregar os registros.');
         } finally {
             setCarregando(false);
             setAtualizando(false);
         }
-    }, [isAdmin]);
+    }, [isAdmin, visao]);
+
 
     useEffect(() => {
         buscarDados();
@@ -158,6 +172,13 @@ function Registros() {
 
     const nomeStatus = (status) => {
         return status === 'retirada' ? 'Retirada ativa' : 'Devolvida';
+    };
+
+    const podeDevolver = (registro) => {
+        return (
+            isAdmin ||
+            Number(registro.id_usuario) === Number(usuario?.id_usuario)
+        );
     };
 
     const registrosFiltrados = useMemo(() => {
@@ -446,20 +467,59 @@ function Registros() {
 
             {/* Histórico */}
             <section className="dashboard-panel registros-panel">
+
                 <div className="panel-header registros-panel-header">
                     <div>
-                        <h3>Histórico de movimentações</h3>
+                        <h3>
+                            {visao === 'hoje'
+                                ? 'Movimentações de hoje'
+                                : isAdmin
+                                    ? 'Histórico completo'
+                                    : 'Meu histórico'}
+                        </h3>
+
                         <p>
-                            {isAdmin
-                                ? 'Visualize todas as movimentações da empresa.'
-                                : 'Visualize suas retiradas e devoluções.'}
+                            {visao === 'hoje'
+                                ? 'Acompanhe as retiradas e devoluções de toda a empresa hoje.'
+                                : isAdmin
+                                    ? 'Visualize todas as movimentações registradas pela empresa.'
+                                    : 'Visualize suas próprias retiradas e devoluções.'}
                         </p>
                     </div>
 
-                    <span className="registros-total-label">
-                        {registrosFiltrados.length} resultado(s)
-                    </span>
+                    <div className="registros-panel-actions">
+                        <div className="registros-view-switch">
+                            <button
+                                type="button"
+                                className={`registros-view-button ${visao === 'hoje' ? 'active' : ''
+                                    }`}
+                                onClick={() => setVisao('hoje')}
+                                disabled={visao === 'hoje' || atualizando}
+                            >
+                                <i className="bi bi-calendar-day"></i>
+                                Hoje
+                            </button>
+
+                            <button
+                                type="button"
+                                className={`registros-view-button ${visao !== 'hoje' ? 'active' : ''
+                                    }`}
+                                onClick={() =>
+                                    setVisao(visao === 'hoje' ? 'historico' : 'hoje')
+                                }
+                                disabled={atualizando}
+                            >
+                                <i className="bi bi-clock-history"></i>
+                                {isAdmin ? 'Histórico completo' : 'Meu histórico'}
+                            </button>
+                        </div>
+
+                        <span className="registros-total-label">
+                            {registrosFiltrados.length} resultado(s)
+                        </span>
+                    </div>
                 </div>
+
 
                 {/* Filtros */}
                 <div className="registros-filters">
@@ -631,7 +691,7 @@ function Registros() {
                                                     <i className="bi bi-eye"></i>
                                                 </button>
 
-                                                {registro.status === 'retirada' && (
+                                                {registro.status === 'retirada' && podeDevolver(registro) && (
                                                     <button
                                                         className="registro-return-button"
                                                         onClick={() => abrirConfirmacaoDevolucao(registro)}
@@ -969,16 +1029,17 @@ function Registros() {
                                 Fechar
                             </button>
 
-                            {registroSelecionado.status === 'retirada' && (
-                                <button
-                                    className="registros-primary-button"
-                                    onClick={() => abrirConfirmacaoDevolucao(registroSelecionado)}
-                                    disabled={devolvendo === registroSelecionado.id_registro}
-                                >
-                                    <i className="bi bi-check2"></i>
-                                    Registrar devolução
-                                </button>
-                            )}
+                            {registroSelecionado.status === 'retirada' &&
+                                podeDevolver(registroSelecionado) && (
+                                    <button
+                                        className="registros-primary-button"
+                                        onClick={() => abrirConfirmacaoDevolucao(registroSelecionado)}
+                                        disabled={devolvendo === registroSelecionado.id_registro}
+                                    >
+                                        <i className="bi bi-check2"></i>
+                                        Registrar devolução
+                                    </button>
+                                )}
                         </div>
                     </section>
                 </div>

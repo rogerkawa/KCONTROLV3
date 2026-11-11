@@ -91,7 +91,8 @@ routes(app);
 
 // Inicialização
 const porta = process.env.PORT || 3333;
+const end = process.env.END;
 
 app.listen(porta, () => {
-    console.log(`Servidor rodando na porta ${porta}`);
+    console.log(`Servidor rodando na porta ${end}:${porta}`);
 });
