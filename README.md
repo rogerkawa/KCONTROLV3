@@ -18,6 +18,28 @@ Uma plataforma para organizar salas, pessoas e movimentações em um só lugar. 
 
 ---
 
+## Novidade: Área de reservas
+
+O KControl V3 recebeu uma nova área dedicada ao gerenciamento de reservas de salas. Agora, além de acompanhar retiradas e devoluções, os usuários podem solicitar a reserva de ambientes, enquanto os administradores gerenciam as solicitações e controlam os períodos de utilização.
+
+**Entre os recursos adicionados:**
+
+- Solicitação de reservas por sala, data e turno.
+- Aprovação ou recusa de solicitações pelos administradores.
+- Consulta das reservas e seus respectivos status.
+- Cancelamento e gerenciamento de reservas.
+- Solicitações de extensão de períodos reservados.
+- Integração com os registros de movimentação, evitando conflitos entre reservas aprovadas e retiradas.
+- Identificação dos períodos em que cada ambiente estará reservado.
+
+A nova funcionalidade amplia o controle sobre a utilização dos ambientes e permite organizar a disponibilidade das salas com mais previsibilidade.
+
+<div align="center">
+<img src="https://raw.githubusercontent.com/rogerkawa/KCONTROLV3/main/Kcontrol1/frontend/src/assets/landing/image%2011.png" alt="Nova área de reservas do KControl V3" width="90%">
+</div>
+
+---
+
 ## Funcionalidades
 
 O KControl reúne os principais processos de gerenciamento de ambientes em uma plataforma intuitiva e centralizada.
