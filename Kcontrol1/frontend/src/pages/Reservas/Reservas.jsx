@@ -1,6 +1,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import  api  from "../../services/api";
+import api from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import "./Reservas.css";
@@ -85,6 +85,12 @@ export default function Reservas() {
         data_fim_prevista: dataLocalAtual(),
         turnos: ["M"],
     });
+
+    const [modalAcao, setModalAcao] = useState(false);
+    const [reservaAcao, setReservaAcao] = useState(null);
+    const [tipoAcao, setTipoAcao] = useState("");
+    const [motivoRecusa, setMotivoRecusa] = useState("");
+    const [processandoAcao, setProcessandoAcao] = useState(false);
 
     const carregarReservas = useCallback(async () => {
         try {
@@ -181,6 +187,68 @@ export default function Reservas() {
     function fecharModal() {
         if (salvando) return;
         setModalAberto(false);
+    }
+
+    function abrirModalAcao(reserva, acao) {
+        setReservaAcao(reserva);
+        setTipoAcao(acao);
+        setMotivoRecusa("");
+        setModalAcao(true);
+    }
+
+    function fecharModalAcao() {
+        if (processandoAcao) return;
+
+        setModalAcao(false);
+        setReservaAcao(null);
+        setTipoAcao("");
+        setMotivoRecusa("");
+    }
+
+    async function confirmarAcaoReserva(event) {
+        event.preventDefault();
+
+        if (!reservaAcao || processandoAcao) return;
+
+        if (tipoAcao === "recusar" && motivoRecusa.trim().length < 3) {
+            mostrarToast("Informe um motivo para a recusa.", "warning");
+            return;
+        }
+
+        setProcessandoAcao(true);
+
+        try {
+            const endpoint = `/reservas/${reservaAcao.id_reserva}/${tipoAcao}`;
+
+            const payload = tipoAcao === "recusar"
+                ? { motivo: motivoRecusa.trim() }
+                : {};
+
+            const resposta = await api.patch(endpoint, payload);
+
+            mostrarToast(
+                resposta.mensagem ||
+                (tipoAcao === "aprovar"
+                    ? "Reserva aprovada com sucesso!"
+                    : "Solicitação recusada."),
+                "success"
+            );
+
+            setModalAcao(false);
+            setReservaAcao(null);
+            setTipoAcao("");
+            setMotivoRecusa("");
+
+            await carregarReservas();
+
+        } catch (error) {
+            mostrarToast(
+                error.message || "Não foi possível processar a solicitação.",
+                "error"
+            );
+        } finally {
+            setProcessandoAcao(false);
+        }
     }
 
     async function solicitarReserva(event) {
@@ -435,7 +503,7 @@ export default function Reservas() {
                                     <th>Turnos</th>
                                     <th>Status</th>
                                     <th>Solicitada em</th>
-                                    <th />
+                                    <th className="reserva-coluna-acoes">Ações</th>
                                 </tr>
                             </thead>
 
@@ -492,16 +560,33 @@ export default function Reservas() {
                                                 </span>
                                             </td>
 
-                                            <td>
-                                                <button
-                                                    className="reserva-btn-icon"
-                                                    title="Detalhes em breve"
-                                                    aria-label={`Detalhes da reserva ${reserva.titulo}`}
-                                                    disabled
-                                                >
-                                                    <Icone nome="bi-three-dots" />
-                                                </button>
-                                            </td>
+                                            
+                                                <td>
+                                                    {isAdmin && reserva.status === "pendente" ? (
+                                                        <div className="reserva-row-actions">
+                                                            <button
+                                                                type="button"
+                                                                className="reserva-action-btn aprovar"
+                                                                onClick={() => abrirModalAcao(reserva, "aprovar")}
+                                                            >
+                                                                <i className="bi bi-check-lg"></i>
+                                                                Aprovar
+                                                            </button>
+
+                                                            <button
+                                                                type="button"
+                                                                className="reserva-action-btn recusar"
+                                                                onClick={() => abrirModalAcao(reserva, "recusar")}
+                                                            >
+                                                                <i className="bi bi-x-lg"></i>
+                                                                Recusar
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <span className="reservas-sem-acao">—</span>
+                                                    )}
+                                                </td>
+                                            
                                         </tr>
                                     );
                                 })}
@@ -729,6 +814,122 @@ export default function Reservas() {
                             </footer>
                         </form>
                     </section>
+                </div>
+            )}
+
+            {modalAcao && reservaAcao && (
+                <div
+                    className="reserva-modal-overlay"
+                    onClick={fecharModalAcao}
+                >
+                    <div
+                        className="reserva-modal"
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <div className="reserva-modal-header">
+                            <div>
+                                <span className="reservas-eyebrow">
+                                    GERENCIAMENTO DE RESERVAS
+                                </span>
+
+                                <h2>
+                                    {tipoAcao === "aprovar"
+                                        ? "Aprovar solicitação"
+                                        : "Recusar solicitação"}
+                                </h2>
+
+                                <p>
+                                    {tipoAcao === "aprovar"
+                                        ? "Confirme a aprovação desta reserva."
+                                        : "Informe o motivo pelo qual esta solicitação será recusada."}
+                                </p>
+                            </div>
+
+                            <button
+                                type="button"
+                                className="reserva-btn-icon"
+                                onClick={fecharModalAcao}
+                                disabled={processandoAcao}
+                            >
+                                <i className="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+
+                        <div className="reserva-modal-infos">
+                            <div className="reserva-modal-info">
+                                <div>
+                                    <span>Solicitação</span>
+                                    <strong>{reservaAcao.titulo}</strong>
+                                </div>
+                                <div>
+                                    <span>Sala</span>
+                                    <strong>{reservaAcao.nome_sala}</strong>
+                                </div>
+                                <div>
+                                    <span>Período</span>
+                                    <strong>
+                                        {formatarData(reservaAcao.data_inicio)}
+                                        {" até "}
+                                        {formatarData(reservaAcao.data_fim_prevista)}
+                                    </strong>
+                                </div>
+                                <div>
+                                    <span>Turnos</span>
+                                    <strong>
+                                        {obterTurnos(reservaAcao.turnos).join(", ")}
+                                    </strong>
+                                </div>
+                            </div>
+                            {tipoAcao === "recusar" && (
+                                <div className="reserva-form-group">
+                                    <label htmlFor="motivoRecusa">
+                                        Motivo da recusa *
+                                    </label>
+                                    <textarea
+                                        id="motivoRecusa"
+                                        value={motivoRecusa}
+                                        onChange={(event) => setMotivoRecusa(event.target.value)}
+                                        placeholder="Explique o motivo da recusa..."
+                                        rows={4}
+                                        required
+                                    />
+                                </div>
+                            )}
+                            {tipoAcao === "aprovar" && (
+                                <div className="reserva-modal-info">
+                                    <p>
+                                        Ao aprovar, o sistema verificará automaticamente
+                                        a disponibilidade da sala e possíveis conflitos
+                                        com outras reservas e retiradas.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="reserva-modal-footer">
+                            <button
+                                type="button"
+                                className="reserva-btn-secondary"
+                                onClick={fecharModalAcao}
+                                disabled={processandoAcao}
+                            >
+                                Voltar
+                            </button>
+
+                            <button
+                                type="button"
+                                className="reserva-btn-primary"
+                                onClick={confirmarAcaoReserva}
+                                disabled={processandoAcao}
+                            >
+                                {processandoAcao
+                                    ? "Processando..."
+                                    : tipoAcao === "aprovar"
+                                        ? "Confirmar aprovação"
+                                        : "Confirmar recusa"}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </main>

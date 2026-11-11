@@ -16,6 +16,17 @@ const formularioInicial = {
     hora_retirada: new Date().toTimeString().slice(0, 5)
 };
 
+// Retorna a data local no formato YYYY-MM-DD.
+function obterDataLocal() {
+    const hoje = new Date();
+
+    const ano = hoje.getFullYear();
+    const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+    const dia = String(hoje.getDate()).padStart(2, '0');
+
+    return `${ano}-${mes}-${dia}`;
+}
+
 function Registros() {
     const { usuario } = useAuth();
     const { mostrarToast } = useToast();
@@ -24,12 +35,14 @@ function Registros() {
     const isAdmin = usuario?.role === 'admin';
 
     const [registros, setRegistros] = useState([]);
+    const [reservas, setReservas] = useState([]);
     const [salas, setSalas] = useState([]);
     const [setores, setSetores] = useState([]);
 
     const [carregando, setCarregando] = useState(true);
     const [atualizando, setAtualizando] = useState(false);
     const [erro, setErro] = useState('');
+
     const [modalAberto, setModalAberto] = useState(false);
     const [registroSelecionado, setRegistroSelecionado] = useState(null);
     const [registroParaDevolver, setRegistroParaDevolver] = useState(null);
@@ -44,10 +57,12 @@ function Registros() {
     const [filtroTurno, setFiltroTurno] = useState('todos');
     const [filtroSala, setFiltroSala] = useState('todos');
     const [filtroSetor, setFiltroSetor] = useState('todos');
+
     const [visao, setVisao] = useState('hoje');
 
-
-
+    // =========================================================
+    // CARREGAMENTO DOS DADOS
+    // =========================================================
 
     const buscarDados = useCallback(async (silencioso = false) => {
         if (silencioso) {
@@ -69,29 +84,42 @@ function Registros() {
                 endpointRegistros = '/registros/meus';
             }
 
-            const [respostaRegistros, respostaSalas, respostaSetores] =
-                await Promise.all([
-                    api.get(endpointRegistros),
-                    api.get('/salas'),
-                    api.get('/setores')
-                ]);
+            const endpointReservas = isAdmin
+                ? '/reservas'
+                : '/reservas/minhas';
+
+            const [
+                respostaRegistros,
+                respostaReservas,
+                respostaSalas,
+                respostaSetores
+            ] = await Promise.all([
+                api.get(endpointRegistros),
+                api.get(endpointReservas),
+                api.get('/salas'),
+                api.get('/setores')
+            ]);
 
             setRegistros(respostaRegistros.registros || []);
+            setReservas(respostaReservas.reservas || []);
             setSalas(respostaSalas.salas || []);
             setSetores(respostaSetores.setores || []);
 
         } catch (error) {
-            setErro(error.message || 'Não foi possível carregar os registros.');
+            setErro(error.message || 'Não foi possível carregar os dados.');
         } finally {
             setCarregando(false);
             setAtualizando(false);
         }
     }, [isAdmin, visao]);
 
-
     useEffect(() => {
         buscarDados();
     }, [buscarDados]);
+
+    // =========================================================
+    // NOTIFICAÇÕES
+    // =========================================================
 
     const notificar = (tipo, texto) => {
         const tipos = {
@@ -104,21 +132,27 @@ function Registros() {
         mostrarToast(texto, tipos[tipo] || 'info');
     };
 
-    const avisarFormularioInvalido = event => {
+    const avisarFormularioInvalido = (event) => {
         event.preventDefault();
 
         if (invalidToastRef.current) return;
 
         invalidToastRef.current = true;
+
         const mensagem = event.target.validity.valueMissing
             ? 'Preencha todos os campos obrigatórios.'
             : 'Verifique os dados informados.';
 
         mostrarToast(mensagem, 'warning');
+
         window.setTimeout(() => {
             invalidToastRef.current = false;
         }, 1000);
     };
+
+    // =========================================================
+    // FORMATAÇÃO E UTILITÁRIOS
+    // =========================================================
 
     const atualizarFormulario = (campo, valor) => {
         setFormulario((anterior) => ({
@@ -181,22 +215,65 @@ function Registros() {
         );
     };
 
+    // Converte os turnos da reserva em uma lista.
+    // O backend retorna GROUP_CONCAT no formato "M,T,N".
+    const obterTurnosReserva = (turnos) => {
+        if (!turnos) return [];
+
+        if (Array.isArray(turnos)) {
+            return turnos;
+        }
+
+        return String(turnos)
+            .split(',')
+            .map((turno) => turno.trim())
+            .filter(Boolean);
+    };
+
+    const formatarTurnosReserva = (turnos) => {
+        const lista = obterTurnosReserva(turnos);
+
+        if (!lista.length) return '--';
+
+        return lista.map(nomeTurno).join(', ');
+    };
+
+    // =========================================================
+    // FILTROS DE REGISTROS
+    // =========================================================
+
     const registrosFiltrados = useMemo(() => {
+        const dataAtual = obterDataLocal();
         const termo = busca.trim().toLowerCase();
 
         return registros.filter((registro) => {
+            const dataRegistro = String(
+                registro.data_retirada
+            ).slice(0, 10);
+
+            const correspondeVisao =
+                visao === 'hoje'
+                    ? dataRegistro === dataAtual
+                    : visao === 'agendadas'
+                        ? dataRegistro > dataAtual
+                        : dataRegistro <= dataAtual;
+
             const correspondeBusca = !termo || [
                 registro.nome_usuario,
                 registro.responsavel,
                 registro.nome_sala,
                 registro.nome_setor
-            ].some((valor) => String(valor || '').toLowerCase().includes(termo));
+            ].some((valor) =>
+                String(valor || '').toLowerCase().includes(termo)
+            );
 
             const correspondeStatus =
-                filtroStatus === 'todos' || registro.status === filtroStatus;
+                filtroStatus === 'todos' ||
+                registro.status === filtroStatus;
 
             const correspondeTurno =
-                filtroTurno === 'todos' || registro.turno === filtroTurno;
+                filtroTurno === 'todos' ||
+                registro.turno === filtroTurno;
 
             const correspondeSala =
                 filtroSala === 'todos' ||
@@ -207,6 +284,7 @@ function Registros() {
                 String(registro.id_setor) === filtroSetor;
 
             return (
+                correspondeVisao &&
                 correspondeBusca &&
                 correspondeStatus &&
                 correspondeTurno &&
@@ -220,8 +298,63 @@ function Registros() {
         filtroStatus,
         filtroTurno,
         filtroSala,
-        filtroSetor
+        filtroSetor,
+        visao
     ]);
+
+    // =========================================================
+    // FILTROS DE RESERVAS
+    // =========================================================
+
+    const reservasFiltradas = useMemo(() => {
+        const dataAtual = obterDataLocal();
+        const termo = busca.trim().toLowerCase();
+
+        return reservas.filter((reserva) => {
+            const dataFim = String(
+                reserva.data_fim_prevista || ''
+            ).slice(0, 10);
+
+            // Apenas reservas aprovadas cujo período ainda não terminou.
+            const reservaAprovada =
+                reserva.status === 'aprovada' &&
+                dataFim >= dataAtual;
+
+            const correspondeBusca = !termo || [
+                reserva.nome_solicitante,
+                reserva.nome_sala,
+                reserva.nome_aprovador
+            ].some((valor) =>
+                String(valor || '').toLowerCase().includes(termo)
+            );
+
+            const turnosReserva = obterTurnosReserva(reserva.turnos);
+
+            const correspondeTurno =
+                filtroTurno === 'todos' ||
+                turnosReserva.includes(filtroTurno);
+
+            const correspondeSala =
+                filtroSala === 'todos' ||
+                String(reserva.id_sala) === filtroSala;
+
+            return (
+                reservaAprovada &&
+                correspondeBusca &&
+                correspondeTurno &&
+                correspondeSala
+            );
+        });
+    }, [
+        reservas,
+        busca,
+        filtroTurno,
+        filtroSala
+    ]);
+
+    // =========================================================
+    // INDICADORES
+    // =========================================================
 
     const totalAtivos = registros.filter(
         (registro) => registro.status === 'retirada'
@@ -235,10 +368,14 @@ function Registros() {
         (sala) => sala.status === 'disponivel'
     );
 
+    // =========================================================
+    // MODAL DE NOVA RETIRADA
+    // =========================================================
+
     const abrirModal = () => {
         setFormulario({
             ...formularioInicial,
-            data_retirada: new Date().toLocaleDateString('en-CA'),
+            data_retirada: obterDataLocal(),
             hora_retirada: new Date().toTimeString().slice(0, 5)
         });
 
@@ -279,12 +416,20 @@ function Registros() {
             notificar('sucesso', 'Retirada registrada com sucesso!');
 
             await buscarDados(true);
+
         } catch (error) {
-            notificar('erro', error.message || 'Não foi possível registrar a retirada.');
+            notificar(
+                'erro',
+                error.message || 'Não foi possível registrar a retirada.'
+            );
         } finally {
             setSalvando(false);
         }
     };
+
+    // =========================================================
+    // DEVOLUÇÃO
+    // =========================================================
 
     const abrirConfirmacaoDevolucao = (registro) => {
         if (devolvendo) return;
@@ -306,9 +451,13 @@ function Registros() {
         setDevolvendo(registro.id_registro);
 
         try {
-            await api.patch(`/registros/${registro.id_registro}/devolver`);
+            await api.patch(
+                `/registros/${registro.id_registro}/devolver`
+            );
 
-            if (registroSelecionado?.id_registro === registro.id_registro) {
+            if (
+                registroSelecionado?.id_registro === registro.id_registro
+            ) {
                 setRegistroSelecionado(null);
             }
 
@@ -317,6 +466,7 @@ function Registros() {
             notificar('sucesso', 'Devolução registrada com sucesso!');
 
             await buscarDados(true);
+
         } catch (error) {
             notificar(
                 'erro',
@@ -326,6 +476,10 @@ function Registros() {
             setDevolvendo(null);
         }
     };
+
+    // =========================================================
+    // LIMPEZA DOS FILTROS
+    // =========================================================
 
     const limparFiltros = () => {
         setBusca('');
@@ -342,6 +496,30 @@ function Registros() {
         filtroSala !== 'todos' ||
         filtroSetor !== 'todos';
 
+    // =========================================================
+    // TÍTULOS DAS VISUALIZAÇÕES
+    // =========================================================
+
+    const tituloVisao = {
+        hoje: 'Movimentações de hoje',
+        agendadas: 'Retiradas agendadas',
+        reservadas: 'Reservas aprovadas',
+        historico: isAdmin ? 'Histórico completo' : 'Meu histórico'
+    };
+
+    const descricaoVisao = {
+        hoje: 'Acompanhe as retiradas e devoluções previstas para hoje.',
+        agendadas: 'Visualize as retiradas programadas para datas futuras.',
+        reservadas: 'Consulte as salas com reservas aprovadas e períodos ainda vigentes.',
+        historico: isAdmin
+            ? 'Visualize as movimentações anteriores e atuais da empresa.'
+            : 'Visualize suas movimentações anteriores e atuais.'
+    };
+
+    // =========================================================
+    // ESTADOS DE CARREGAMENTO E ERRO
+    // =========================================================
+
     if (carregando) {
         return (
             <div className="registros-loading">
@@ -351,14 +529,14 @@ function Registros() {
         );
     }
 
-    if (erro && registros.length === 0) {
+    if (erro && registros.length === 0 && reservas.length === 0) {
         return (
             <section className="registros-error">
                 <div className="registros-error-icon">
                     <i className="bi bi-exclamation-circle"></i>
                 </div>
 
-                <h2>Não foi possível carregar os registros</h2>
+                <h2>Não foi possível carregar os dados</h2>
                 <p>{erro}</p>
 
                 <button onClick={() => buscarDados()}>
@@ -368,6 +546,10 @@ function Registros() {
             </section>
         );
     }
+
+    // =========================================================
+    // INTERFACE
+    // =========================================================
 
     return (
         <div className="registros-page">
@@ -382,7 +564,7 @@ function Registros() {
                     <h2>Registros</h2>
 
                     <p>
-                        Acompanhe as retiradas e devoluções de salas da sua empresa.
+                        Acompanhe as retiradas, devoluções e reservas de salas da sua empresa.
                     </p>
                 </div>
 
@@ -416,83 +598,101 @@ function Registros() {
 
             {/* Indicadores */}
             <section className="dashboard-stats registros-stats">
+
                 <article className="stat-card">
                     <div className="stat-card-top">
                         <span>Total de registros</span>
+
                         <div className="stat-icon">
                             <i className="bi bi-journal-text"></i>
                         </div>
                     </div>
 
-                    <strong className="stat-value">{registros.length}</strong>
-                    <span className="stat-description">Movimentações registradas</span>
+                    <strong className="stat-value">
+                        {registros.length}
+                    </strong>
+
+                    <span className="stat-description">
+                        Movimentações registradas
+                    </span>
                 </article>
 
                 <article className="stat-card">
                     <div className="stat-card-top">
                         <span>Retiradas ativas</span>
+
                         <div className="stat-icon">
                             <i className="bi bi-arrow-left-right"></i>
                         </div>
                     </div>
 
-                    <strong className="stat-value">{totalAtivos}</strong>
-                    <span className="stat-description">Aguardando devolução</span>
+                    <strong className="stat-value">
+                        {totalAtivos}
+                    </strong>
+
+                    <span className="stat-description">
+                        Aguardando devolução
+                    </span>
                 </article>
 
                 <article className="stat-card">
                     <div className="stat-card-top">
                         <span>Devoluções</span>
+
                         <div className="stat-icon">
                             <i className="bi bi-check-circle"></i>
                         </div>
                     </div>
 
-                    <strong className="stat-value">{totalDevolvidos}</strong>
-                    <span className="stat-description">Retiradas finalizadas</span>
+                    <strong className="stat-value">
+                        {totalDevolvidos}
+                    </strong>
+
+                    <span className="stat-description">
+                        Retiradas finalizadas
+                    </span>
                 </article>
 
                 <article className="stat-card">
                     <div className="stat-card-top">
                         <span>Salas disponíveis</span>
+
                         <div className="stat-icon">
                             <i className="bi bi-door-open"></i>
                         </div>
                     </div>
 
-                    <strong className="stat-value">{salasDisponiveis.length}</strong>
-                    <span className="stat-description">Disponíveis para retirada</span>
+                    <strong className="stat-value">
+                        {salasDisponiveis.length}
+                    </strong>
+
+                    <span className="stat-description">
+                        Disponíveis para retirada
+                    </span>
                 </article>
+
             </section>
 
-            {/* Histórico */}
+            {/* Painel de registros */}
             <section className="dashboard-panel registros-panel">
 
                 <div className="panel-header registros-panel-header">
-                    <div>
-                        <h3>
-                            {visao === 'hoje'
-                                ? 'Movimentações de hoje'
-                                : isAdmin
-                                    ? 'Histórico completo'
-                                    : 'Meu histórico'}
-                        </h3>
 
-                        <p>
-                            {visao === 'hoje'
-                                ? 'Acompanhe as retiradas e devoluções de toda a empresa hoje.'
-                                : isAdmin
-                                    ? 'Visualize todas as movimentações registradas pela empresa.'
-                                    : 'Visualize suas próprias retiradas e devoluções.'}
-                        </p>
+                    <div>
+                        <h3>{tituloVisao[visao]}</h3>
+                        <p>{descricaoVisao[visao]}</p>
                     </div>
 
                     <div className="registros-panel-actions">
+
+                        {/* Seletor de visualizações */}
                         <div className="registros-view-switch">
+
                             <button
                                 type="button"
-                                className={`registros-view-button ${visao === 'hoje' ? 'active' : ''
-                                    }`}
+                                className={`registros-view-button ${
+                                    visao === 'hoje' ? 'active' : ''
+                                }`}
                                 onClick={() => setVisao('hoje')}
                                 disabled={visao === 'hoje' || atualizando}
                             >
@@ -502,33 +702,65 @@ function Registros() {
 
                             <button
                                 type="button"
-                                className={`registros-view-button ${visao !== 'hoje' ? 'active' : ''
-                                    }`}
-                                onClick={() =>
-                                    setVisao(visao === 'hoje' ? 'historico' : 'hoje')
-                                }
-                                disabled={atualizando}
+                                className={`registros-view-button ${
+                                    visao === 'agendadas' ? 'active' : ''
+                                }`}
+                                onClick={() => setVisao('agendadas')}
+                                disabled={visao === 'agendadas' || atualizando}
+                            >
+                                <i className="bi bi-calendar-check"></i>
+                                Agendadas
+                            </button>
+
+                            <button
+                                type="button"
+                                className={`registros-view-button ${
+                                    visao === 'reservadas' ? 'active' : ''
+                                }`}
+                                onClick={() => setVisao('reservadas')}
+                                disabled={visao === 'reservadas' || atualizando}
+                            >
+                                <i className="bi bi-calendar2-check"></i>
+                                Reservadas
+                            </button>
+
+                            <button
+                                type="button"
+                                className={`registros-view-button ${
+                                    visao === 'historico' ? 'active' : ''
+                                }`}
+                                onClick={() => setVisao('historico')}
+                                disabled={visao === 'historico' || atualizando}
                             >
                                 <i className="bi bi-clock-history"></i>
-                                {isAdmin ? 'Histórico completo' : 'Meu histórico'}
+                                Histórico
                             </button>
+
                         </div>
 
                         <span className="registros-total-label">
-                            {registrosFiltrados.length} resultado(s)
+                            {visao === 'reservadas'
+                                ? reservasFiltradas.length
+                                : registrosFiltrados.length
+                            } resultado(s)
                         </span>
+
                     </div>
                 </div>
 
-
                 {/* Filtros */}
                 <div className="registros-filters">
+
                     <div className="registros-search">
                         <i className="bi bi-search"></i>
 
                         <input
                             type="search"
-                            placeholder="Buscar responsável, sala ou setor..."
+                            placeholder={
+                                visao === 'reservadas'
+                                    ? 'Buscar solicitante ou sala...'
+                                    : 'Buscar responsável, sala ou setor...'
+                            }
                             value={busca}
                             onChange={(event) => setBusca(event.target.value)}
                         />
@@ -543,15 +775,17 @@ function Registros() {
                         )}
                     </div>
 
-                    <select
-                        value={filtroStatus}
-                        onChange={(event) => setFiltroStatus(event.target.value)}
-                        aria-label="Filtrar por status"
-                    >
-                        <option value="todos">Todos os status</option>
-                        <option value="retirada">Retirada ativa</option>
-                        <option value="devolvida">Devolvida</option>
-                    </select>
+                    {visao !== 'reservadas' && (
+                        <select
+                            value={filtroStatus}
+                            onChange={(event) => setFiltroStatus(event.target.value)}
+                            aria-label="Filtrar por status"
+                        >
+                            <option value="todos">Todos os status</option>
+                            <option value="retirada">Retirada ativa</option>
+                            <option value="devolvida">Devolvida</option>
+                        </select>
+                    )}
 
                     <select
                         value={filtroTurno}
@@ -570,25 +804,35 @@ function Registros() {
                         aria-label="Filtrar por sala"
                     >
                         <option value="todos">Todas as salas</option>
+
                         {salas.map((sala) => (
-                            <option key={sala.id_sala} value={String(sala.id_sala)}>
+                            <option
+                                key={sala.id_sala}
+                                value={String(sala.id_sala)}
+                            >
                                 {sala.nome}
                             </option>
                         ))}
                     </select>
 
-                    <select
-                        value={filtroSetor}
-                        onChange={(event) => setFiltroSetor(event.target.value)}
-                        aria-label="Filtrar por setor"
-                    >
-                        <option value="todos">Todos os setores</option>
-                        {setores.map((setor) => (
-                            <option key={setor.id_setor} value={String(setor.id_setor)}>
-                                {setor.nome}
-                            </option>
-                        ))}
-                    </select>
+                    {visao !== 'reservadas' && (
+                        <select
+                            value={filtroSetor}
+                            onChange={(event) => setFiltroSetor(event.target.value)}
+                            aria-label="Filtrar por setor"
+                        >
+                            <option value="todos">Todos os setores</option>
+
+                            {setores.map((setor) => (
+                                <option
+                                    key={setor.id_setor}
+                                    value={String(setor.id_setor)}
+                                >
+                                    {setor.nome}
+                                </option>
+                            ))}
+                        </select>
+                    )}
 
                     {possuiFiltros && (
                         <button
@@ -599,153 +843,315 @@ function Registros() {
                             Limpar
                         </button>
                     )}
+
                 </div>
 
-                {/* Tabela */}
-                {registrosFiltrados.length > 0 ? (
-                    <div className="registros-table-wrapper">
-                        <table className="registros-table">
-                            <thead>
-                                <tr>
-                                    <th>Responsável</th>
-                                    <th>Sala / Setor</th>
-                                    <th>Turno</th>
-                                    <th>Data</th>
-                                    <th>Horário</th>
-                                    <th>Status</th>
-                                    <th>Ações</th>
-                                </tr>
-                            </thead>
+                {/* ================================================= */}
+                {/* TABELA DE RESERVAS APROVADAS */}
+                {/* ================================================= */}
 
-                            <tbody>
-                                {registrosFiltrados.map((registro) => (
-                                    <tr key={registro.id_registro}>
-                                        <td>
-                                            <div className="registro-user-cell">
-                                                <div className="registro-user-avatar">
-                                                    {(registro.responsavel || 'U')
-                                                        .charAt(0)
-                                                        .toUpperCase()}
-                                                </div>
+                {visao === 'reservadas' ? (
 
-                                                <div>
-                                                    <strong>{registro.responsavel}</strong>
-                                                    <span>
-                                                        {registro.nome_usuario || 'Usuário'}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </td>
+                    reservasFiltradas.length > 0 ? (
 
-                                        <td>
-                                            <div className="registro-location-cell">
-                                                <strong>{registro.nome_sala}</strong>
-                                                <span>{registro.nome_setor}</span>
-                                            </div>
-                                        </td>
+                        <div className="registros-table-wrapper">
+                            <table className="registros-table">
 
-                                        <td>
-                                            <span className="registro-shift">
-                                                {nomeTurno(registro.turno)}
-                                            </span>
-                                        </td>
-
-                                        <td>
-                                            <span className="registro-date">
-                                                {formatarData(registro.data_retirada)}
-                                            </span>
-                                        </td>
-
-                                        <td>
-                                            <div className="registro-time-cell">
-                                                <span>
-                                                    <i className="bi bi-box-arrow-up-right"></i>
-                                                    {formatarHora(registro.hora_retirada)}
-                                                </span>
-
-                                                <span>
-                                                    <i className="bi bi-box-arrow-in-down-left"></i>
-                                                    {formatarHora(registro.hora_entrega)}
-                                                </span>
-                                            </div>
-                                        </td>
-
-                                        <td>
-                                            <span className={`registro-status ${registro.status === 'retirada'
-                                                ? 'status-active'
-                                                : 'status-returned'
-                                                }`}>
-                                                <i className="bi bi-circle-fill"></i>
-                                                {nomeStatus(registro.status)}
-                                            </span>
-                                        </td>
-
-                                        <td>
-                                            <div className="registro-actions">
-                                                <button
-                                                    className="registro-icon-button"
-                                                    onClick={() => setRegistroSelecionado(registro)}
-                                                    title="Ver detalhes"
-                                                    aria-label="Ver detalhes"
-                                                >
-                                                    <i className="bi bi-eye"></i>
-                                                </button>
-
-                                                {registro.status === 'retirada' && podeDevolver(registro) && (
-                                                    <button
-                                                        className="registro-return-button"
-                                                        onClick={() => abrirConfirmacaoDevolucao(registro)}
-                                                        disabled={devolvendo === registro.id_registro}
-                                                        title="Registrar devolução"
-                                                    >
-                                                        {devolvendo === registro.id_registro ? (
-                                                            <i className="bi bi-arrow-repeat"></i>
-                                                        ) : (
-                                                            <i className="bi bi-check2"></i>
-                                                        )}
-                                                        <span>Devolver</span>
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </td>
+                                <thead>
+                                    <tr>
+                                        <th>Solicitante</th>
+                                        <th>Sala</th>
+                                        <th>Turnos</th>
+                                        <th>Início</th>
+                                        <th>Fim previsto</th>
+                                        <th>Status</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                ) : (
-                    <div className="registros-empty">
-                        <div className="registros-empty-icon">
-                            <i className="bi bi-journal-x"></i>
+                                </thead>
+
+                                <tbody>
+                                    {reservasFiltradas.map((reserva) => (
+                                        <tr key={reserva.id_reserva}>
+
+                                            <td>
+                                                <div className="registro-user-cell">
+
+                                                    <div className="registro-user-avatar">
+                                                        {(reserva.nome_solicitante || 'U')
+                                                            .charAt(0)
+                                                            .toUpperCase()}
+                                                    </div>
+
+                                                    <div>
+                                                        <strong>
+                                                            {reserva.nome_solicitante || 'Solicitante'}
+                                                        </strong>
+
+                                                        <span>
+                                                            Reserva aprovada
+                                                        </span>
+                                                    </div>
+
+                                                </div>
+                                            </td>
+
+                                            <td>
+                                                <div className="registro-location-cell">
+                                                    <strong>
+                                                        {reserva.nome_sala || '--'}
+                                                    </strong>
+                                                </div>
+                                            </td>
+
+                                            <td>
+                                                <span className="registro-shift">
+                                                    {formatarTurnosReserva(reserva.turnos)}
+                                                </span>
+                                            </td>
+
+                                            <td>
+                                                <span className="registro-date">
+                                                    {formatarData(reserva.data_inicio)}
+                                                </span>
+                                            </td>
+
+                                            <td>
+                                                <span className="registro-date">
+                                                    {formatarData(reserva.data_fim_prevista)}
+                                                </span>
+                                            </td>
+
+                                            <td>
+                                                <span className="registro-status status-active">
+                                                    <i className="bi bi-circle-fill"></i>
+                                                    Aprovada
+                                                </span>
+                                            </td>
+
+                                        </tr>
+                                    ))}
+                                </tbody>
+
+                            </table>
                         </div>
 
-                        <h3>
-                            {registros.length === 0
-                                ? 'Nenhum registro encontrado'
-                                : 'Nenhum resultado para os filtros'}
-                        </h3>
+                    ) : (
 
-                        <p>
-                            {registros.length === 0
-                                ? 'As retiradas e devoluções aparecerão aqui.'
-                                : 'Experimente alterar os filtros ou a pesquisa.'}
-                        </p>
+                        <div className="registros-empty">
 
-                        {possuiFiltros && (
-                            <button onClick={limparFiltros}>
-                                Limpar filtros
-                            </button>
-                        )}
-                    </div>
+                            <div className="registros-empty-icon">
+                                <i className="bi bi-calendar2-x"></i>
+                            </div>
+
+                            <h3>
+                                {reservas.length === 0
+                                    ? 'Nenhuma reserva encontrada'
+                                    : 'Nenhuma reserva aprovada vigente'
+                                }
+                            </h3>
+
+                            <p>
+                                {reservas.length === 0
+                                    ? 'As reservas aprovadas aparecerão aqui.'
+                                    : 'Não existem reservas aprovadas com períodos ainda não encerrados.'
+                                }
+                            </p>
+
+                            {possuiFiltros && (
+                                <button onClick={limparFiltros}>
+                                    Limpar filtros
+                                </button>
+                            )}
+
+                        </div>
+
+                    )
+
+                ) : (
+
+                    /* ================================================= */
+                    /* TABELA DE REGISTROS */
+                    /* ================================================= */
+
+                    registrosFiltrados.length > 0 ? (
+
+                        <div className="registros-table-wrapper">
+                            <table className="registros-table">
+
+                                <thead>
+                                    <tr>
+                                        <th>Responsável</th>
+                                        <th>Sala / Setor</th>
+                                        <th>Turno</th>
+                                        <th>Data</th>
+                                        <th>Horário</th>
+                                        <th>Status</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    {registrosFiltrados.map((registro) => (
+                                        <tr key={registro.id_registro}>
+
+                                            <td>
+                                                <div className="registro-user-cell">
+
+                                                    <div className="registro-user-avatar">
+                                                        {(registro.responsavel || 'U')
+                                                            .charAt(0)
+                                                            .toUpperCase()}
+                                                    </div>
+
+                                                    <div>
+                                                        <strong>
+                                                            {registro.responsavel}
+                                                        </strong>
+
+                                                        <span>
+                                                            {registro.nome_usuario || 'Usuário'}
+                                                        </span>
+                                                    </div>
+
+                                                </div>
+                                            </td>
+
+                                            <td>
+                                                <div className="registro-location-cell">
+                                                    <strong>{registro.nome_sala}</strong>
+                                                    <span>{registro.nome_setor}</span>
+                                                </div>
+                                            </td>
+
+                                            <td>
+                                                <span className="registro-shift">
+                                                    {nomeTurno(registro.turno)}
+                                                </span>
+                                            </td>
+
+                                            <td>
+                                                <span className="registro-date">
+                                                    {formatarData(registro.data_retirada)}
+                                                </span>
+                                            </td>
+
+                                            <td>
+                                                <div className="registro-time-cell">
+
+                                                    <span>
+                                                        <i className="bi bi-box-arrow-up-right"></i>
+                                                        {formatarHora(registro.hora_retirada)}
+                                                    </span>
+
+                                                    <span>
+                                                        <i className="bi bi-box-arrow-in-down-left"></i>
+                                                        {formatarHora(registro.hora_entrega)}
+                                                    </span>
+
+                                                </div>
+                                            </td>
+
+                                            <td>
+                                                <span
+                                                    className={`registro-status ${
+                                                        registro.status === 'retirada'
+                                                            ? 'status-active'
+                                                            : 'status-returned'
+                                                    }`}
+                                                >
+                                                    <i className="bi bi-circle-fill"></i>
+                                                    {nomeStatus(registro.status)}
+                                                </span>
+                                            </td>
+
+                                            <td>
+                                                <div className="registro-actions">
+
+                                                    <button
+                                                        className="registro-icon-button"
+                                                        onClick={() => setRegistroSelecionado(registro)}
+                                                        title="Ver detalhes"
+                                                        aria-label="Ver detalhes"
+                                                    >
+                                                        <i className="bi bi-eye"></i>
+                                                    </button>
+
+                                                    {registro.status === 'retirada' &&
+                                                        podeDevolver(registro) && (
+                                                            <button
+                                                                className="registro-return-button"
+                                                                onClick={() =>
+                                                                    abrirConfirmacaoDevolucao(registro)
+                                                                }
+                                                                disabled={
+                                                                    devolvendo === registro.id_registro
+                                                                }
+                                                                title="Registrar devolução"
+                                                            >
+                                                                {devolvendo === registro.id_registro ? (
+                                                                    <i className="bi bi-arrow-repeat"></i>
+                                                                ) : (
+                                                                    <i className="bi bi-check2"></i>
+                                                                )}
+
+                                                                <span>Devolver</span>
+                                                            </button>
+                                                        )}
+
+                                                </div>
+                                            </td>
+
+                                        </tr>
+                                    ))}
+                                </tbody>
+
+                            </table>
+                        </div>
+
+                    ) : (
+
+                        <div className="registros-empty">
+
+                            <div className="registros-empty-icon">
+                                <i className="bi bi-journal-x"></i>
+                            </div>
+
+                            <h3>
+                                {registros.length === 0
+                                    ? 'Nenhum registro encontrado'
+                                    : 'Nenhum resultado para os filtros'}
+                            </h3>
+
+                            <p>
+                                {registros.length === 0
+                                    ? 'As retiradas e devoluções aparecerão aqui.'
+                                    : 'Experimente alterar os filtros ou a pesquisa.'}
+                            </p>
+
+                            {possuiFiltros && (
+                                <button onClick={limparFiltros}>
+                                    Limpar filtros
+                                </button>
+                            )}
+
+                        </div>
+
+                    )
+
                 )}
+
             </section>
 
-            {/* Modal de nova retirada */}
+            {/* ================================================= */}
+            {/* MODAL DE NOVA RETIRADA */}
+            {/* ================================================= */}
+
             {modalAberto && (
                 <div
                     className="registros-modal-overlay"
                     onMouseDown={(event) => {
-                        if (event.target === event.currentTarget) fecharModal();
+                        if (event.target === event.currentTarget) {
+                            fecharModal();
+                        }
                     }}
                 >
                     <section
@@ -754,15 +1160,20 @@ function Registros() {
                         aria-modal="true"
                         aria-labelledby="retirada-modal-title"
                     >
+
                         <div className="registros-modal-header">
                             <div>
                                 <span className="registros-eyebrow">
                                     NOVA MOVIMENTAÇÃO
                                 </span>
 
-                                <h2 id="retirada-modal-title">Registrar retirada</h2>
+                                <h2 id="retirada-modal-title">
+                                    Registrar retirada
+                                </h2>
 
-                                <p>Preencha os dados para registrar uma nova retirada.</p>
+                                <p>
+                                    Preencha os dados para registrar uma nova retirada.
+                                </p>
                             </div>
 
                             <button
@@ -780,6 +1191,7 @@ function Registros() {
                             onInvalidCapture={avisarFormularioInvalido}
                         >
                             <div className="registros-form-grid">
+
                                 <label className="registros-form-field">
                                     <span>Setor</span>
 
@@ -787,10 +1199,15 @@ function Registros() {
                                         required
                                         value={formulario.id_setor}
                                         onChange={(event) =>
-                                            atualizarFormulario('id_setor', event.target.value)
+                                            atualizarFormulario(
+                                                'id_setor',
+                                                event.target.value
+                                            )
                                         }
                                     >
-                                        <option value="">Selecione um setor</option>
+                                        <option value="">
+                                            Selecione um setor
+                                        </option>
 
                                         {setores
                                             .filter((setor) => setor.status === 'ativo')
@@ -812,10 +1229,15 @@ function Registros() {
                                         required
                                         value={formulario.id_sala}
                                         onChange={(event) =>
-                                            atualizarFormulario('id_sala', event.target.value)
+                                            atualizarFormulario(
+                                                'id_sala',
+                                                event.target.value
+                                            )
                                         }
                                     >
-                                        <option value="">Selecione uma sala</option>
+                                        <option value="">
+                                            Selecione uma sala
+                                        </option>
 
                                         {salasDisponiveis.map((sala) => (
                                             <option
@@ -845,7 +1267,10 @@ function Registros() {
                                         required
                                         value={formulario.responsavel}
                                         onChange={(event) =>
-                                            atualizarFormulario('responsavel', event.target.value)
+                                            atualizarFormulario(
+                                                'responsavel',
+                                                event.target.value
+                                            )
                                         }
                                     />
                                 </label>
@@ -856,7 +1281,10 @@ function Registros() {
                                     <select
                                         value={formulario.turno}
                                         onChange={(event) =>
-                                            atualizarFormulario('turno', event.target.value)
+                                            atualizarFormulario(
+                                                'turno',
+                                                event.target.value
+                                            )
                                         }
                                     >
                                         <option value="M">Matutino</option>
@@ -873,7 +1301,10 @@ function Registros() {
                                         required
                                         value={formulario.data_retirada}
                                         onChange={(event) =>
-                                            atualizarFormulario('data_retirada', event.target.value)
+                                            atualizarFormulario(
+                                                'data_retirada',
+                                                event.target.value
+                                            )
                                         }
                                     />
                                 </label>
@@ -886,13 +1317,18 @@ function Registros() {
                                         required
                                         value={formulario.hora_retirada}
                                         onChange={(event) =>
-                                            atualizarFormulario('hora_retirada', event.target.value)
+                                            atualizarFormulario(
+                                                'hora_retirada',
+                                                event.target.value
+                                            )
                                         }
                                     />
                                 </label>
+
                             </div>
 
                             <div className="registros-modal-footer">
+
                                 <button
                                     type="button"
                                     className="registros-secondary-button"
@@ -908,7 +1344,9 @@ function Registros() {
                                     disabled={
                                         salvando ||
                                         !salasDisponiveis.length ||
-                                        !setores.some((setor) => setor.status === 'ativo')
+                                        !setores.some(
+                                            (setor) => setor.status === 'ativo'
+                                        )
                                     }
                                 >
                                     {salvando ? (
@@ -923,13 +1361,18 @@ function Registros() {
                                         </>
                                     )}
                                 </button>
+
                             </div>
                         </form>
+
                     </section>
                 </div>
             )}
 
-            {/* Modal de detalhes */}
+            {/* ================================================= */}
+            {/* MODAL DE DETALHES */}
+            {/* ================================================= */}
+
             {registroSelecionado && (
                 <div
                     className="registros-modal-overlay"
@@ -945,14 +1388,20 @@ function Registros() {
                         aria-modal="true"
                         aria-labelledby="registro-details-title"
                     >
+
                         <div className="registros-modal-header">
                             <div>
                                 <span className="registros-eyebrow">
                                     REGISTRO #{registroSelecionado.id_registro}
                                 </span>
 
-                                <h2 id="registro-details-title">Detalhes da movimentação</h2>
-                                <p>Informações da retirada e da devolução.</p>
+                                <h2 id="registro-details-title">
+                                    Detalhes da movimentação
+                                </h2>
+
+                                <p>
+                                    Informações da retirada e da devolução.
+                                </p>
                             </div>
 
                             <button
@@ -965,63 +1414,87 @@ function Registros() {
                         </div>
 
                         <div className="registro-details-status">
-                            <span className={`registro-status ${registroSelecionado.status === 'retirada'
-                                ? 'status-active'
-                                : 'status-returned'
-                                }`}>
+                            <span
+                                className={`registro-status ${
+                                    registroSelecionado.status === 'retirada'
+                                        ? 'status-active'
+                                        : 'status-returned'
+                                }`}
+                            >
                                 <i className="bi bi-circle-fill"></i>
                                 {nomeStatus(registroSelecionado.status)}
                             </span>
                         </div>
 
                         <div className="registro-details-grid">
+
                             <div>
                                 <span>Responsável</span>
-                                <strong>{registroSelecionado.responsavel || '--'}</strong>
+                                <strong>
+                                    {registroSelecionado.responsavel || '--'}
+                                </strong>
                             </div>
 
                             <div>
                                 <span>Registrado por</span>
-                                <strong>{registroSelecionado.nome_usuario || '--'}</strong>
+                                <strong>
+                                    {registroSelecionado.nome_usuario || '--'}
+                                </strong>
                             </div>
 
                             <div>
                                 <span>Sala</span>
-                                <strong>{registroSelecionado.nome_sala || '--'}</strong>
+                                <strong>
+                                    {registroSelecionado.nome_sala || '--'}
+                                </strong>
                             </div>
 
                             <div>
                                 <span>Setor</span>
-                                <strong>{registroSelecionado.nome_setor || '--'}</strong>
+                                <strong>
+                                    {registroSelecionado.nome_setor || '--'}
+                                </strong>
                             </div>
 
                             <div>
                                 <span>Turno</span>
-                                <strong>{nomeTurno(registroSelecionado.turno)}</strong>
+                                <strong>
+                                    {nomeTurno(registroSelecionado.turno)}
+                                </strong>
                             </div>
 
                             <div>
                                 <span>Data da retirada</span>
-                                <strong>{formatarData(registroSelecionado.data_retirada)}</strong>
+                                <strong>
+                                    {formatarData(registroSelecionado.data_retirada)}
+                                </strong>
                             </div>
 
                             <div>
                                 <span>Horário da retirada</span>
-                                <strong>{formatarHora(registroSelecionado.hora_retirada)}</strong>
+                                <strong>
+                                    {formatarHora(registroSelecionado.hora_retirada)}
+                                </strong>
                             </div>
 
                             <div>
                                 <span>Horário da devolução</span>
-                                <strong>{formatarHora(registroSelecionado.hora_entrega)}</strong>
+                                <strong>
+                                    {formatarHora(registroSelecionado.hora_entrega)}
+                                </strong>
                             </div>
 
                             <div className="registro-details-full">
                                 <span>Criado em</span>
-                                <strong>{formatarDataHora(registroSelecionado.created_at)}</strong>
+                                <strong>
+                                    {formatarDataHora(registroSelecionado.created_at)}
+                                </strong>
                             </div>
+
                         </div>
 
                         <div className="registros-modal-footer">
+
                             <button
                                 className="registros-secondary-button"
                                 onClick={() => setRegistroSelecionado(null)}
@@ -1033,19 +1506,28 @@ function Registros() {
                                 podeDevolver(registroSelecionado) && (
                                     <button
                                         className="registros-primary-button"
-                                        onClick={() => abrirConfirmacaoDevolucao(registroSelecionado)}
-                                        disabled={devolvendo === registroSelecionado.id_registro}
+                                        onClick={() =>
+                                            abrirConfirmacaoDevolucao(registroSelecionado)
+                                        }
+                                        disabled={
+                                            devolvendo === registroSelecionado.id_registro
+                                        }
                                     >
                                         <i className="bi bi-check2"></i>
                                         Registrar devolução
                                     </button>
                                 )}
+
                         </div>
+
                     </section>
                 </div>
             )}
 
-            {/* Modal de confirmação de devolução */}
+            {/* ================================================= */}
+            {/* MODAL DE CONFIRMAÇÃO DE DEVOLUÇÃO */}
+            {/* ================================================= */}
+
             {registroParaDevolver && (
                 <div
                     className="registros-modal-overlay"
@@ -1062,6 +1544,7 @@ function Registros() {
                         aria-labelledby="confirm-devolucao-title"
                         aria-describedby="confirm-devolucao-description"
                     >
+
                         <div className="registros-confirm-content">
 
                             <div className="registros-confirm-icon">
@@ -1078,25 +1561,34 @@ function Registros() {
 
                             <p id="confirm-devolucao-description">
                                 Você está prestes a registrar a devolução da sala
-                                <strong> {registroParaDevolver.nome_sala}</strong>.
+                                <strong>
+                                    {' '}{registroParaDevolver.nome_sala}
+                                </strong>.
                                 Deseja continuar?
                             </p>
 
                             <div className="registros-confirm-info">
+
                                 <div>
                                     <span>Sala</span>
-                                    <strong>{registroParaDevolver.nome_sala}</strong>
+                                    <strong>
+                                        {registroParaDevolver.nome_sala}
+                                    </strong>
                                 </div>
 
                                 <div>
                                     <span>Responsável</span>
-                                    <strong>{registroParaDevolver.responsavel}</strong>
+                                    <strong>
+                                        {registroParaDevolver.responsavel}
+                                    </strong>
                                 </div>
+
                             </div>
 
                         </div>
 
                         <div className="registros-modal-footer">
+
                             <button
                                 type="button"
                                 className="registros-secondary-button"
@@ -1124,11 +1616,12 @@ function Registros() {
                                     </>
                                 )}
                             </button>
+
                         </div>
+
                     </section>
                 </div>
             )}
-
 
         </div>
     );
