@@ -33,40 +33,40 @@ const registroController = {
     }
   },
 
-async listarHoje(req, res) {
+  async listarHoje(req, res) {
     try {
-        // Obtém a data atual considerando o fuso horário de São Luís/MA.
-        const partesData = new Intl.DateTimeFormat('en-CA', {
-            timeZone: 'America/Fortaleza',
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-        }).formatToParts(new Date());
+      // Obtém a data atual considerando o fuso horário de São Luís/MA.
+      const partesData = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Fortaleza',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      }).formatToParts(new Date());
 
-        const partes = Object.fromEntries(
-            partesData.map(({ type, value }) => [type, value])
-        );
+      const partes = Object.fromEntries(
+        partesData.map(({ type, value }) => [type, value])
+      );
 
-        const dataHoje = `${partes.year}-${partes.month}-${partes.day}`;
+      const dataHoje = `${partes.year}-${partes.month}-${partes.day}`;
 
-        const registros = await registroModel.listarHoje(
-            req.user.id_empresa,
-            dataHoje
-        );
+      const registros = await registroModel.listarHoje(
+        req.user.id_empresa,
+        dataHoje
+      );
 
-        return res.status(200).json({
-            data: dataHoje,
-            registros
-        });
+      return res.status(200).json({
+        data: dataHoje,
+        registros
+      });
 
     } catch (error) {
-        console.error(error);
+      console.error(error);
 
-        return res.status(500).json({
-            mensagem: "Erro ao listar registros de hoje."
-        });
+      return res.status(500).json({
+        mensagem: "Erro ao listar registros de hoje."
+      });
     }
-},
+  },
 
 
   async buscarPorId(req, res) {
@@ -208,6 +208,10 @@ async listarHoje(req, res) {
         SETOR_INATIVO: [
           409,
           "Este setor está inativo e não pode receber novos registros.",
+        ],
+        SALA_RESERVADA: [
+          409,
+          "Esta sala está reservada para outra atividade nesta data e turno."
         ],
       };
 

@@ -6,6 +6,7 @@ import cookieParser from 'cookie-parser';
 import { apiLimiter } from './middlewares/rateLimitMiddleware.js';
 import conect from './config/database.js';
 import routes from './routes/index.js';
+import iniciarReservasJob from './jobs/reservasJob.js';
 
 const app = express();
 app.set('trust proxy', 1);
@@ -95,4 +96,7 @@ const end = process.env.END;
 
 app.listen(porta, () => {
     console.log(`Servidor rodando na porta ${end}:${porta}`);
+    iniciarReservasJob();
 });
+
+

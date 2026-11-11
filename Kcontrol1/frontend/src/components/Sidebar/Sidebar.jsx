@@ -14,6 +14,7 @@ const menus = {
   admin: [
     { label: "Dashboard", icon: "bi-grid-1x2", path: "/dashboard" },
     { label: "Registros", icon: "bi-arrow-left-right", path: "/registros" },
+    { label: "Reservas", icon: "bi-calendar2-check", path: "/reservas" },
     { label: "Salas", icon: "bi-door-open", path: "/salas" },
     { label: "Setores", icon: "bi-diagram-3", path: "/setores" },
     { label: "Membros", icon: "bi-people", path: "/membros" },
@@ -24,6 +25,7 @@ const menus = {
 
   user: [
     { label: "Registros", icon: "bi-arrow-left-right", path: "/registros" },
+    { label: "Reservas", icon: "bi-calendar2-check", path: "/reservas" },
     { label: "Meu perfil", icon: "bi-person", path: "/perfil" },
     { label: "Configurações", icon: "bi-gear", path: "/configuracoes" },
   ],

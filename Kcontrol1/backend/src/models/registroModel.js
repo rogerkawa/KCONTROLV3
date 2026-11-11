@@ -62,9 +62,9 @@ const registroModel = {
         return registros;
     },
 
-async listarHoje(id_empresa, dataHoje) {
-    const [registros] = await conect.execute(
-        `SELECT
+    async listarHoje(id_empresa, dataHoje) {
+        const [registros] = await conect.execute(
+            `SELECT
             r.id_registro,
             r.id_usuario,
             u.nome AS nome_usuario,
@@ -88,11 +88,11 @@ async listarHoje(id_empresa, dataHoje) {
         ORDER BY
             FIELD(r.turno, 'M', 'T', 'N'),
             r.hora_retirada ASC`,
-        [id_empresa, dataHoje]
-    );
+            [id_empresa, dataHoje]
+        );
 
-    return registros;
-},
+        return registros;
+    },
 
 
     async buscarPorId(id_registro, id_empresa) {
@@ -168,6 +168,35 @@ async listarHoje(id_empresa, dataHoje) {
             if (salas[0].status !== 'disponivel') {
                 throw new Error('SALA_INDISPONIVEL');
             }
+
+            // Verifica se existe uma reserva aprovada para esta sala,
+            // na data e no turno informados.
+            const [reservas] = await conexao.execute(
+                `SELECT r.id_reserva
+                    FROM reservas r
+                    INNER JOIN reserva_turnos rt
+                        ON rt.id_reserva = r.id_reserva
+                    WHERE r.id_empresa = ?
+                    AND r.id_sala = ?
+                    AND r.status = 'aprovada'
+                    AND r.data_inicio <= ?
+                    AND r.data_fim_prevista >= ?
+                    AND rt.turno = ?
+                    LIMIT 1
+                    FOR UPDATE`,
+                [
+                    dados.id_empresa,
+                    dados.id_sala,
+                    dados.data_retirada,
+                    dados.data_retirada,
+                    dados.turno
+                ]
+            );
+
+            if (reservas.length) {
+                throw new Error('SALA_RESERVADA');
+            }
+
 
             // Verifica se já existe um registro ativo
             // para a mesma sala e o mesmo turno.

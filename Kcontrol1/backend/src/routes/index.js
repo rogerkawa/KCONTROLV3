@@ -9,6 +9,7 @@ import auditoriaRoutes from './auditoriaRoutes.js';
 import dashboardRoutes from './dashboardRoutes.js';
 import perfilRoutes from './perfilRoutes.js';
 import empresaRoutes from './empresaRoutes.js';
+import reservaRoutes from './reservaRoutes.js';
 
 const routes = (app) => {
 
@@ -23,6 +24,7 @@ const routes = (app) => {
     app.use('/api/dashboard', dashboardRoutes);
     app.use('/api/perfil', perfilRoutes);
     app.use('/api/empresas', empresaRoutes);
+    app.use('/api/reservas', reservaRoutes);
 
 };
 

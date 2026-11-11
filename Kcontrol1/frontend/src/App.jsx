@@ -21,6 +21,7 @@ import DefinirSenha from "./pages/DefinirSenha/DefinirSenha";
 import LandingPage from "./pages/landpage/LandingPage";
 import VerificarMFA from "./pages/mfa/VerificarMFA";
 import ConfigurarMFA from "./pages/mfa/ConfigurarMFA";
+import Reservas from "./pages/Reservas/Reservas";
 
 
 function PublicRoute({ children }) {
@@ -69,6 +70,15 @@ function RotaSuperAdmin({ children }) {
 
     return children;
 } 
+function RotaReservas({ children }) {
+    const { usuario } = useAuth();
+
+    if (usuario?.role?.toLowerCase() === "superadmin") {
+        return <Navigate to="/empresas" replace />;
+    }
+
+    return children;
+}
 
 function PaginaEmConstrucao() {
   return (
@@ -133,6 +143,7 @@ function AppRoutes() {
           <Route path="/dashboard" element={<DashboardAcesso />} />
 
           <Route path="/registros" element={<Registros />} />
+          <Route path="/reservas" element={<RotaReservas> <Reservas /> </RotaReservas>}/>
           <Route path="/salas" element={<Salas />} />
           <Route path="/setores" element={<Setores />} />
           <Route path="/membros" element={<Membros />} />
