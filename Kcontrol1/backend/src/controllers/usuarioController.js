@@ -64,9 +64,9 @@ const usuarioController = {
         });
       }
 
-      if (senha.length < 12) {
+      if (senha.length < 6) {
         return res.status(400).json({
-          mensagem: "A senha deve ter pelo menos 12 caracteres.",
+          mensagem: "A senha deve ter pelo menos 6 caracteres.",
         });
       }
 
